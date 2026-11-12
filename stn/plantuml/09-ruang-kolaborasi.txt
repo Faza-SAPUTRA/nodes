@@ -1,0 +1,33 @@
+@startuml
+title STN Diagram - Ruang Kolaborasi
+left to right direction
+
+skinparam state {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  RoundCorner 50
+}
+
+[*] --> DaftarRuang : Akses /app/kolaborasi\nTampil daftar ruang & filter
+
+state "Daftar Ruang" as DaftarRuang
+state "Modal Ruang" as ModalRuang
+state "Ruang Aktif" as RuangAktif
+state "Pin Komentar" as PinKomentar
+state "Chat & Vote" as ChatVote
+
+DaftarRuang -down-> ModalRuang : klik "Undang/baru"\nTampil modal buat/gabung ruang
+ModalRuang -up-> DaftarRuang : klik "Batal"\nTutup modal, kembali ke daftar
+ModalRuang --> RuangAktif : buat/gabung ruang\nTampil preview desain & panel review
+
+DaftarRuang --> RuangAktif : klik chip ruang\nMuat konten ruang terpilih
+
+RuangAktif -down-> PinKomentar : klik area desain\nTampil form pin komentar di posisi klik
+PinKomentar -up-> RuangAktif : kirim / resolve\nPin muncul/status berubah di desain
+
+RuangAktif -down-> ChatVote : ketik chat / klik vote\nProses kirim pesan / catat vote
+ChatVote -up-> RuangAktif : kirim / perbarui\nPesan muncul di feed / bar suara update
+
+RuangAktif --> DaftarRuang : ganti ruang lain\nMuat daftar ruang & filter
+@enduml
+

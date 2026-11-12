@@ -1,0 +1,25 @@
+@startuml
+title STN Diagram - Landing Page
+left to right direction
+
+skinparam state {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  RoundCorner 50
+}
+
+[*] --> ViewHero : Buka '/'\nTampil hero section & navbar
+
+state "Hero Section" as ViewHero
+state "Section Masalah" as ViewMasalah
+state "Section Fitur" as ViewFitur
+state "Section Cara Kerja" as ViewCara
+
+ViewHero --> ViewMasalah : scroll ke bawah\nTampil kartu tantangan mahasiswa
+ViewMasalah --> ViewFitur : scroll ke bawah\nTampil grid fitur utama platform
+ViewFitur --> ViewCara : scroll ke bawah\nTampil 4 langkah cara kerja
+ViewCara -left-> ViewHero : scroll ke atas\nKembali ke hero section
+
+ViewHero --> [*] : klik "Masuk" / "Mulai belajar"\nNavigasi ke halaman Auth
+@enduml
+

@@ -1,0 +1,33 @@
+@startuml
+title STN Diagram - Halaman Masuk (Login)
+left to right direction
+
+skinparam state {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  RoundCorner 50
+}
+
+[*] --> FormLogin : Buka /masuk\nTampil form login (email & password)
+
+state "Form Login" as FormLogin
+state "Validasi Data" as Validasi
+state "Proses Auth" as ProsesAuth
+state "Error Banner" as ErrorBanner
+
+FormLogin --> FormLogin : isi email & password\nField terisi, validasi realtime
+FormLogin --> FormLogin : klik toggle mata\nTampil/sembunyikan teks password
+FormLogin --> Validasi : klik "Masuk"\nProses validasi client-side
+
+Validasi -down-> ErrorBanner : input kosong/salah format\nTampil pesan "Email dan password wajib diisi"
+ErrorBanner -up-> FormLogin : perbaiki input\nHapus error, aktifkan form
+
+Validasi --> ProsesAuth : input valid\nKirim data ke server autentikasi
+ProsesAuth -down-> ErrorBanner : kredensial salah\nTampil pesan "Email atau password salah"
+
+ProsesAuth --> [*] : Login sukses\nRedirect ke Dashboard
+
+FormLogin --> [*] : klik "Daftar sekarang"\nTampil form registrasi
+FormLogin --> [*] : klik "Kembali ke beranda"\nNavigasi ke Landing Page
+@enduml
+

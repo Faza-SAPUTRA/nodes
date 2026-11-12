@@ -1,0 +1,32 @@
+@startuml
+title STN Diagram - Kanvas Praktik
+left to right direction
+
+skinparam state {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  RoundCorner 50
+}
+
+[*] --> DaftarProyek : Akses /app/kanvas\nTampil daftar proyek / empty state
+
+state "Daftar Proyek" as DaftarProyek
+state "Modal Baru" as ModalBaru
+state "Editor Kanvas" as EditorKanvas
+state "Manipulasi Layer" as EditLayer
+
+DaftarProyek -down-> ModalBaru : klik "Proyek baru"\nTampil modal input nama proyek
+ModalBaru -up-> DaftarProyek : klik "Batal"\nTutup modal, kembali ke daftar
+ModalBaru --> EditorKanvas : isi nama & "Buat"\nProyek dibuat, tampil editor kanvas kosong
+
+DaftarProyek --> EditorKanvas : klik proyek (muat data)\nMuat data proyek & tampil di canvas
+
+EditorKanvas -down-> EditLayer : tambah/klik layer\nTampil panel properti (X, Y, warna, font)
+EditLayer -up-> EditorKanvas : ubah properti / drag\nElemen diperbarui realtime di canvas
+
+EditorKanvas --> EditorKanvas : klik "Simpan"\nProyek tersimpan, tampil notifikasi sukses
+EditorKanvas --> EditorKanvas : klik undo/redo/zoom\nCanvas di-update sesuai aksi
+
+EditorKanvas -left-> DaftarProyek : ganti proyek\nTampil konfirmasi unsaved & kembali ke daftar
+@enduml
+

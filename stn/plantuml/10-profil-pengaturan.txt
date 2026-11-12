@@ -1,0 +1,32 @@
+@startuml
+title STN Diagram - Profil & Pengaturan
+left to right direction
+
+skinparam state {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  RoundCorner 50
+}
+
+[*] --> HalProfil : Akses /app/profil\nTampil halaman profil, statistik & badges
+
+state "Halaman Profil" as HalProfil
+state "Update Profil" as UpdateProfil
+state "Ganti Password" as GantiPass
+state "Modal Hapus" as ModalHapus
+
+HalProfil -down-> UpdateProfil : edit form nama/bio\nField terisi dengan data baru
+UpdateProfil -up-> HalProfil : klik "Simpan profil"\nData tersimpan, tampil notifikasi sukses
+
+HalProfil -down-> GantiPass : isi form password baru\nField terisi & validasi
+GantiPass -up-> HalProfil : klik "Perbarui"\nPassword diperbarui, form dikosongkan
+
+HalProfil -down-> HalProfil : klik toggle preferensi\nTema/bahasa/animasi berubah realtime (auto-save)
+
+HalProfil --> ModalHapus : klik "Hapus akun"\nTampil modal konfirmasi dengan warning
+ModalHapus -left-> HalProfil : klik "Batal"\nTutup modal, kembali ke profil
+
+ModalHapus --> [*] : ketik "HAPUS" & submit\nAkun dihapus, logout & redirect ke Login
+HalProfil --> [*] : klik "Keluar" (Logout)\nHapus sesi & redirect ke Login
+@enduml
+

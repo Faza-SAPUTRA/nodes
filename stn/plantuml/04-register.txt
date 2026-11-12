@@ -1,0 +1,34 @@
+@startuml
+title STN Diagram - Halaman Daftar (Register)
+left to right direction
+
+skinparam state {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  RoundCorner 50
+}
+
+[*] --> FormRegister : Buka /daftar\nTampil form registrasi
+
+state "Form Register" as FormRegister
+state "Cek Password" as CekPassword
+state "Validasi Data" as Validasi
+state "Proses Registrasi" as ProsesReg
+state "Error Banner" as ErrorBanner
+
+FormRegister -down-> CekPassword : ketik password\nProses cek kekuatan password
+CekPassword -up-> FormRegister : update indikator\nTampil bar & label (Lemah/Sedang/Kuat)
+
+FormRegister --> Validasi : klik "Buat akun"\nProses validasi client-side
+Validasi -down-> ErrorBanner : tidak valid\nTampil pesan error field
+ErrorBanner -up-> FormRegister : perbaiki input\nHapus error, aktifkan form
+
+Validasi --> ProsesReg : valid\nKirim data ke server registrasi
+ProsesReg -down-> ErrorBanner : email terpakai\nTampil pesan "Email sudah terdaftar"
+
+ProsesReg --> [*] : Registrasi sukses\nRedirect ke Dashboard
+
+FormRegister --> [*] : klik "Masuk di sini"\nTampil form login
+FormRegister --> [*] : klik "Kembali ke beranda"\nNavigasi ke Landing Page
+@enduml
+

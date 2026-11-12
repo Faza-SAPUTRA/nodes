@@ -1,0 +1,47 @@
+@startuml
+title STN Diagram - Main Program (Navigasi Global NODES)
+left to right direction
+
+skinparam state {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  FontSize 12
+  RoundCorner 0
+}
+
+[*] --> LandingPage : Akses URL (Publik)\nTampil Landing Page
+
+state "Landing Page\n----\n(o)---(o)\n  \\   /\n   (o)" as LandingPage
+state "Login (/masuk)\n----\n(o)---(o)\n  \\   /\n   (o)" as Login
+state "Register (/daftar)\n----\n(o)---(o)\n  \\   /\n   (o)" as Register
+state "Dashboard (/app)\n----\n(o)---(o)\n  \\   /\n   (o)" as Dashboard
+state "Katalog Modul\n----\n(o)---(o)\n  \\   /\n   (o)" as KatalogModul
+state "Detail Modul\n----\n(o)---(o)\n  \\   /\n   (o)" as DetailModul
+state "Kanvas Praktik\n----\n(o)---(o)\n  \\   /\n   (o)" as KanvasPraktik
+state "Ruang Kolaborasi\n----\n(o)---(o)\n  \\   /\n   (o)" as Kolaborasi
+state "Profil & Pengaturan\n----\n(o)---(o)\n  \\   /\n   (o)" as Profil
+
+LandingPage --> Login : klik "Masuk"\nTampil form login
+LandingPage --> Register : klik "Mulai belajar"\nTampil form registrasi
+
+Login -down-> Register : klik "Daftar sekarang"\nTampil form registrasi
+Register -up-> Login : klik "Masuk di sini"\nTampil form login
+
+Login --> Dashboard : Submit sukses\nRedirect & tampil dashboard
+Register --> Dashboard : Submit sukses\nRedirect & tampil dashboard
+
+Dashboard --> KatalogModul : navigasi sidebar\nTampil daftar modul & filter
+Dashboard --> KanvasPraktik : navigasi sidebar\nTampil daftar proyek kanvas
+Dashboard --> Kolaborasi : navigasi sidebar\nTampil daftar ruang kolaborasi
+Dashboard --> Profil : navigasi sidebar\nTampil halaman profil & pengaturan
+
+KatalogModul --> DetailModul : klik kartu modul\nTampil konten materi sesi
+
+' Navigasi kembali
+Login -left-> LandingPage : klik "Kembali"\nTampil landing page
+Register -left-> LandingPage : klik "Kembali"\nTampil landing page
+DetailModul -left-> KatalogModul : klik "Kembali"\nTampil daftar modul
+
+Profil -up-> Login : klik "Keluar" (Logout)\nHapus sesi & tampil form login
+@enduml
+

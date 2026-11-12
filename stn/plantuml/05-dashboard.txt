@@ -1,0 +1,23 @@
+@startuml
+title STN Diagram - Dashboard
+left to right direction
+
+skinparam state {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  RoundCorner 50
+}
+
+[*] --> TampilDashboard : Akses /app (sudah login)\nTampil greeting, statistik & modul terbaru
+
+state "Tampil Dashboard" as TampilDashboard
+
+TampilDashboard --> [*] : klik "Jelajahi modul"\nTampil halaman Katalog Modul dengan daftar & filter
+TampilDashboard --> [*] : klik kartu modul\nTampil konten sesi materi modul terpilih
+TampilDashboard --> [*] : klik "Lanjutkan"\nTampil sesi terakhir yang sedang dipelajari
+TampilDashboard --> [*] : klik "Lihat semua"\nTampil daftar semua modul di Katalog
+TampilDashboard --> [*] : klik "Buka kanvas praktik"\nTampil daftar proyek kanvas
+TampilDashboard --> [*] : klik "Ruang kolaborasi"\nTampil daftar ruang kolaborasi
+TampilDashboard --> [*] : klik "Lihat progres lengkap"\nTampil halaman profil & statistik progres
+@enduml
+

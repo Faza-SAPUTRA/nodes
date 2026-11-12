@@ -1,0 +1,25 @@
+@startuml
+title STN Diagram - Katalog Modul
+left to right direction
+
+skinparam state {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  RoundCorner 50
+}
+
+[*] --> TampilKatalog : Akses /app/modul\nTampil daftar 16 modul & filter
+
+state "Daftar Modul" as TampilKatalog
+state "Proses Filter" as ProsesFilter
+state "Empty State" as EmptyState
+
+TampilKatalog -right-> ProsesFilter : ketik search / klik filter tab\nFilter daftar modul berdasarkan keyword/kategori
+ProsesFilter -left-> TampilKatalog : hasil ditemukan\nRefresh UI tampil modul hasil filter
+
+ProsesFilter -down-> EmptyState : tidak ada hasil\nTampil pesan "Modul tidak ditemukan"
+EmptyState -up-> TampilKatalog : klik "Reset filter"\nHapus filter & tampil semua modul
+
+TampilKatalog --> [*] : klik kartu modul\nNavigasi ke halaman Detail Modul
+@enduml
+

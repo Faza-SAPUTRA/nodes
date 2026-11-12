@@ -1,0 +1,28 @@
+@startuml
+title STN Diagram - Detail Modul
+left to right direction
+
+skinparam state {
+  BackgroundColor #FFFFFF
+  BorderColor #000000
+  RoundCorner 50
+}
+
+[*] --> BacaMateri : Akses /app/modul/:slug\nTampil konten sesi & sidebar navigasi sub-bab
+
+state "Baca Materi" as BacaMateri
+state "Ubah Status" as UbahStatus
+state "Tulis Catatan" as TulisCatatan
+
+BacaMateri -down-> UbahStatus : klik "Tandai selesai"\nProses update status sesi ke server
+UbahStatus -up-> BacaMateri : update UI\nStatus sesi berubah, progress modul update
+
+BacaMateri -down-> TulisCatatan : isi textarea catatan\nKarakter counter update (n/500)
+TulisCatatan -up-> BacaMateri : klik "Simpan"\nCatatan tersimpan, tampil notifikasi sukses
+
+BacaMateri --> BacaMateri : klik "Sesi berikutnya"\nTampil konten sub-bab berikutnya
+BacaMateri --> BacaMateri : klik node sub-bab di sidebar\nTampil konten sub-bab terpilih
+
+BacaMateri --> [*] : klik "Katalog modul"\nNavigasi ke halaman Katalog Modul
+@enduml
+
