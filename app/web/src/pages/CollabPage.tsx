@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronLeft, Monitor, Tablet, Smartphone,
@@ -6,6 +7,7 @@ import {
   Send, X,
 } from 'lucide-react'
 import clsx from 'clsx'
+import { useToast } from '../components/ui/Toast'
 
 /* ─── Types ─── */
 interface ChatMessage {
@@ -98,9 +100,12 @@ export default function CollabPage() {
   const [chat, setChat] = useState<ChatMessage[]>(initialChat)
   const [input, setInput] = useState('')
   const [showInvite, setShowInvite] = useState(false)
+  const [inviteEmail, setInviteEmail] = useState('')
   const [copied, setCopied] = useState(false)
   const [showPanel, setShowPanel] = useState(true)
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const navigate = useNavigate()
+  const { success, info } = useToast()
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -132,9 +137,26 @@ export default function CollabPage() {
   function handleCopy() {
     navigator.clipboard.writeText('https://nodes.app/collab/r3v13w-x7k')
     setCopied(true)
+    success('Link Tersalin!', 'Link undangan berhasil disalin ke clipboard.')
     setTimeout(() => setCopied(false), 2000)
   }
 
+  function handleBack() {
+    navigate(-1)
+  }
+
+  function handleEndSession() {
+    info('Sesi Berakhir', 'Sesi kolaborasi telah diakhiri.')
+    navigate('/app')
+  }
+
+  function handleSendInvite() {
+    if (!inviteEmail.trim()) return
+    success('Undangan Terkirim! 📩', `Undangan berhasil dikirim ke ${inviteEmail}`)
+    setInviteEmail('')
+  }
+
+  const commentCount = pins.length
   const deviceWidth = device === 'desktop' ? 'max-w-[900px]' : device === 'tablet' ? 'max-w-[600px]' : 'max-w-[375px]'
 
   return (
@@ -142,7 +164,10 @@ export default function CollabPage() {
       {/* ─── Room Header ─── */}
       <header className="flex items-center justify-between px-3 sm:px-5 py-2.5 bg-white border-b border-ink-7 shrink-0 gap-3">
         <div className="flex items-center gap-3 min-w-0">
-          <button className="w-8 h-8 rounded-lg flex items-center justify-center text-ink-4 hover:bg-ink-8 hover:text-ink transition-colors shrink-0">
+          <button
+            onClick={handleBack}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-ink-4 hover:bg-ink-8 hover:text-ink transition-colors shrink-0"
+          >
             <ChevronLeft size={16} />
           </button>
           <div className="min-w-0">
@@ -195,7 +220,10 @@ export default function CollabPage() {
           >
             <MessageSquare size={14} />
           </button>
-          <button className="px-3 py-1.5 rounded-md text-[11px] font-semibold bg-red-500/[.08] text-red-500 hover:bg-red-500/15 transition-colors">
+          <button
+            onClick={handleEndSession}
+            className="px-3 py-1.5 rounded-md text-[11px] font-semibold bg-red-500/[.08] text-red-500 hover:bg-red-500/15 transition-colors"
+          >
             Akhiri Sesi
           </button>
         </div>
@@ -235,7 +263,7 @@ export default function CollabPage() {
                 title="Toggle komentar"
               >
                 <MessageSquare size={14} />
-                <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-teal-600 text-white text-[8px] font-bold flex items-center justify-center">5</span>
+                <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-teal-600 text-white text-[8px] font-bold flex items-center justify-center">{commentCount}</span>
               </button>
               <button
                 className="w-[30px] h-[30px] rounded-md flex items-center justify-center text-ink-4 hover:bg-ink-8 hover:text-ink transition-colors"
@@ -459,7 +487,7 @@ export default function CollabPage() {
                     <VoteCard
                       label="Versi A — Dark"
                       gradient="linear-gradient(135deg,#0F172A,#1E293B)"
-                      votes={2}
+                      initialVotes={2}
                       total={3}
                       voters={[{ letter: 'B', bg: '#7C3AED' }, { letter: 'AP', bg: '#0D9488' }]}
                     />
@@ -467,7 +495,7 @@ export default function CollabPage() {
                       label="Versi B — Light"
                       labelColor="#064E3B"
                       gradient="linear-gradient(135deg,#ECFDF5,#D1FAE5)"
-                      votes={1}
+                      initialVotes={1}
                       total={3}
                       voters={[{ letter: 'S', bg: '#EC4899' }]}
                     />
@@ -521,8 +549,19 @@ export default function CollabPage() {
                   </button>
                 </div>
                 <label className="block text-[11px] font-semibold text-ink-4 mb-1.5 mt-4">Atau undang via email</label>
-                <input className="w-full px-3 py-2 rounded-md border border-ink-7 text-[11px] mb-2.5 outline-none focus:border-teal-600 transition-colors" placeholder="email@example.com" />
-                <button className="w-full py-2.5 rounded-md bg-ink text-white text-xs font-semibold hover:bg-ink-2 transition-colors">Kirim Undangan</button>
+                <input
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendInvite()}
+                  className="w-full px-3 py-2 rounded-md border border-ink-7 text-[11px] mb-2.5 outline-none focus:border-teal-600 transition-colors"
+                  placeholder="email@example.com"
+                />
+                <button
+                  onClick={handleSendInvite}
+                  className="w-full py-2.5 rounded-md bg-ink text-white text-xs font-semibold hover:bg-ink-2 transition-colors"
+                >
+                  Kirim Undangan
+                </button>
               </div>
             </motion.div>
           </motion.div>
@@ -533,21 +572,32 @@ export default function CollabPage() {
 }
 
 /* ─── Vote Card ─── */
-function VoteCard({ label, labelColor, gradient, votes, total, voters }: {
+function VoteCard({ label, labelColor, gradient, initialVotes, total, voters }: {
   label: string
   labelColor?: string
   gradient: string
-  votes: number
+  initialVotes: number
   total: number
   voters: { letter: string; bg: string }[]
 }) {
   const [voted, setVoted] = useState(false)
+  const [votes, setVotes] = useState(initialVotes)
   const pct = Math.round((votes / total) * 100)
+
+  function handleVote() {
+    if (voted) {
+      setVoted(false)
+      setVotes(initialVotes)
+    } else {
+      setVoted(true)
+      setVotes(initialVotes + 1)
+    }
+  }
 
   return (
     <motion.div
       whileTap={{ scale: 0.98 }}
-      onClick={() => setVoted(!voted)}
+      onClick={handleVote}
       className={clsx(
         'border rounded-xl overflow-hidden cursor-pointer transition-all hover:shadow-md',
         voted ? 'border-teal-600' : 'border-ink-7 hover:border-teal-600'
@@ -571,6 +621,9 @@ function VoteCard({ label, labelColor, gradient, votes, total, voters }: {
         {voters.map((v, i) => (
           <span key={i} className="w-[18px] h-[18px] rounded-[5px] flex items-center justify-center text-white text-[7px] font-bold" style={{ background: v.bg }}>{v.letter}</span>
         ))}
+        {voted && (
+          <span className="w-[18px] h-[18px] rounded-[5px] flex items-center justify-center text-white text-[7px] font-bold bg-teal-600 ring-1 ring-teal-400">✓</span>
+        )}
       </div>
     </motion.div>
   )

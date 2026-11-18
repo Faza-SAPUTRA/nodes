@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useInView } from 'framer-motion'
 import { ArrowRight, BookOpen, Check, Lock, UserPlus } from 'lucide-react'
+import { useToast } from '../components/ui/Toast'
 
 function Reveal({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   const ref = useRef(null)
@@ -18,6 +19,7 @@ export default function DashboardPage() {
   const [streakPct, setStreakPct] = useState(0)
   const [progPct, setProgPct] = useState(0)
   const [ccPct, setCcPct] = useState(0)
+  const { warning } = useToast()
 
   useEffect(() => {
     const h = new Date().getHours()
@@ -26,10 +28,10 @@ export default function DashboardPage() {
   }, [])
 
   const modules = [
-    { icon: <BookOpen className="w-[18px] h-[18px]" />, title: 'Visual Design Principles', meta: 'Sesi 7 · Typography, Color Theory', status: 'done' as const, color: 'bg-teal-50 text-teal-600' },
-    { icon: <BookOpen className="w-[18px] h-[18px]" />, title: 'Design System', meta: 'Sesi 9 · Sedang dipelajari', status: 'progress' as const, color: 'bg-blue-50 text-blue-600' },
-    { icon: <BookOpen className="w-[18px] h-[18px]" />, title: 'Wireframing & Sketsa', meta: 'Sesi 6 · 5 sub-bab', status: 'done' as const, color: 'bg-purple-50 text-purple-600' },
-    { icon: <BookOpen className="w-[18px] h-[18px]" />, title: 'Information Architecture', meta: 'Modul 6 · Belum dimulai', status: 'locked' as const, color: 'bg-amber-50 text-amber-600' },
+    { icon: <BookOpen className="w-[18px] h-[18px]" />, title: 'Visual Design Principles', slug: 'typography-readability', meta: 'Sesi 7 · Typography, Color Theory', status: 'done' as const, color: 'bg-teal-50 text-teal-600' },
+    { icon: <BookOpen className="w-[18px] h-[18px]" />, title: 'Design System', slug: 'design-system-ui-tokens', meta: 'Sesi 9 · Sedang dipelajari', status: 'progress' as const, color: 'bg-blue-50 text-blue-600' },
+    { icon: <BookOpen className="w-[18px] h-[18px]" />, title: 'Wireframing & Sketsa', slug: 'wireframing-sketsa', meta: 'Sesi 4 · 5 sub-bab', status: 'done' as const, color: 'bg-purple-50 text-purple-600' },
+    { icon: <BookOpen className="w-[18px] h-[18px]" />, title: 'Information Architecture', slug: 'information-architecture', meta: 'Modul 3 · Belum dimulai', status: 'locked' as const, color: 'bg-amber-50 text-amber-600' },
   ]
 
   const timeline = [
@@ -49,6 +51,13 @@ export default function DashboardPage() {
     { d: 'S', done: true }, { d: 'S', done: true }, { d: 'R', done: true }, { d: 'K', done: true },
     { d: 'J', done: true }, { d: 'S', today: true }, { d: 'M' },
   ]
+
+  function handleModuleClick(e: React.MouseEvent, m: typeof modules[0]) {
+    if (m.status === 'locked') {
+      e.preventDefault()
+      warning('Modul Terkunci', 'Selesaikan modul sebelumnya untuk membuka modul ini.')
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -102,7 +111,7 @@ export default function DashboardPage() {
                 </div>
                 <span className="text-sm font-bold text-teal-400">{ccPct}%</span>
               </div>
-              <Link to="/app/modul/design-system" className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-ink text-sm font-semibold rounded-xl hover:bg-teal-50 transition-colors">
+              <Link to="/app/modul/design-system-ui-tokens" className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-ink text-sm font-semibold rounded-xl hover:bg-teal-50 transition-colors">
                 Lanjutkan <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -166,7 +175,14 @@ export default function DashboardPage() {
           </div>
           <div className="space-y-1">
             {modules.map((m, i) => (
-              <Link key={i} to="/app/modul" className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-ink-9 transition-colors group">
+              <Link
+                key={i}
+                to={m.status === 'locked' ? '#' : `/app/modul/${m.slug}`}
+                onClick={(e) => handleModuleClick(e, m)}
+                className={`flex items-center gap-3 p-2.5 rounded-xl transition-colors group ${
+                  m.status === 'locked' ? 'opacity-60 cursor-not-allowed' : 'hover:bg-ink-9'
+                }`}
+              >
                 <div className={`w-9 h-9 rounded-lg ${m.color} flex items-center justify-center`}>{m.icon}</div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-ink truncate group-hover:text-teal-600 transition-colors">{m.title}</div>

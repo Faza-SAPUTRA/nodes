@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MousePointer2, Square, Type, Hand, Pen, Plus, Layers, Save, ZoomIn, ZoomOut, ChevronRight, X, Trash2 } from 'lucide-react'
+import { useToast } from '../components/ui/Toast'
 
 const tools = [
   { id: 'select', icon: MousePointer2, label: 'Select' },
@@ -10,27 +11,107 @@ const tools = [
   { id: 'pen', icon: Pen, label: 'Pen' },
 ]
 
-const demoProjects = [
-  { id: 1, name: 'Landing Page Redesign', date: '2 jam lalu', color: 'bg-teal-600' },
-  { id: 2, name: 'Wireframe Dashboard', date: 'Kemarin', color: 'bg-blue-500' },
-  { id: 3, name: 'Color Palette Study', date: '3 hari lalu', color: 'bg-purple-500' },
-]
+const templates = ['Kosong', 'Wireframe', 'Mobile App']
 
-const demoLayers = [
+const defaultLayers = [
   { id: 1, name: 'Header Frame', type: 'Frame', visible: true },
   { id: 2, name: 'Logo Text', type: 'Text', visible: true },
   { id: 3, name: 'Hero Rectangle', type: 'Rectangle', visible: true },
   { id: 4, name: 'CTA Button', type: 'Frame', visible: false },
 ]
 
+interface ProjectItem {
+  id: number
+  name: string
+  date: string
+  color: string
+}
+
 export default function CanvasPage() {
   const [activeTool, setActiveTool] = useState('select')
   const [showNewModal, setShowNewModal] = useState(false)
+  const [projects, setProjects] = useState<ProjectItem[]>([
+    { id: 1, name: 'Landing Page Redesign', date: '2 jam lalu', color: 'bg-teal-600' },
+    { id: 2, name: 'Wireframe Dashboard', date: 'Kemarin', color: 'bg-blue-500' },
+    { id: 3, name: 'Color Palette Study', date: '3 hari lalu', color: 'bg-purple-500' },
+  ])
   const [activeProject, setActiveProject] = useState(1)
   const [zoom, setZoom] = useState(100)
+  const [layers, setLayers] = useState(defaultLayers)
   const [selectedLayer, setSelectedLayer] = useState(1)
   const [showSidebar, setShowSidebar] = useState(true)
-  const [props, setProps] = useState({ x: 120, y: 80, w: 320, h: 180, color: '#0D9488' })
+
+  // Properties per layer
+  const [layerProps, setLayerProps] = useState<Record<number, { x: number; y: number; w: number; h: number; color: string }>>({
+    1: { x: 0, y: 0, w: 480, h: 48, color: '#0F172A' },
+    2: { x: 16, y: 12, w: 80, h: 24, color: '#0D9488' },
+    3: { x: 24, y: 60, w: 432, h: 200, color: '#F1F5F9' },
+    4: { x: 24, y: 270, w: 120, h: 36, color: '#0D9488' },
+  })
+
+  // New project modal state
+  const [newProjectName, setNewProjectName] = useState('')
+  const [selectedTemplate, setSelectedTemplate] = useState(0)
+  const [nameError, setNameError] = useState('')
+
+  const { success, warning } = useToast()
+
+  const currentProps = layerProps[selectedLayer] || { x: 0, y: 0, w: 100, h: 100, color: '#0D9488' }
+
+  function updateLayerProp(key: string, value: number | string) {
+    setLayerProps((prev) => ({
+      ...prev,
+      [selectedLayer]: { ...prev[selectedLayer], [key]: value },
+    }))
+  }
+
+  function handleCreateProject() {
+    if (!newProjectName.trim()) {
+      setNameError('Nama proyek wajib diisi')
+      return
+    }
+
+    const colors = ['bg-teal-600', 'bg-blue-500', 'bg-purple-500', 'bg-amber-500', 'bg-pink-500', 'bg-indigo-500']
+    const newProject: ProjectItem = {
+      id: Date.now(),
+      name: newProjectName.trim(),
+      date: 'Baru saja',
+      color: colors[Math.floor(Math.random() * colors.length)],
+    }
+
+    setProjects((prev) => [newProject, ...prev])
+    setActiveProject(newProject.id)
+    setShowNewModal(false)
+    setNewProjectName('')
+    setSelectedTemplate(0)
+    setNameError('')
+    success('Proyek Dibuat! 🎉', `"${newProject.name}" berhasil dibuat dengan template ${templates[selectedTemplate]}.`)
+  }
+
+  function handleDeleteLayer() {
+    if (layers.length <= 1) {
+      warning('Tidak bisa dihapus', 'Minimal harus ada 1 layer.')
+      return
+    }
+
+    const layerName = layers.find((l) => l.id === selectedLayer)?.name
+    setLayers((prev) => prev.filter((l) => l.id !== selectedLayer))
+    setLayerProps((prev) => {
+      const next = { ...prev }
+      delete next[selectedLayer]
+      return next
+    })
+
+    // Select next available layer
+    const remaining = layers.filter((l) => l.id !== selectedLayer)
+    if (remaining.length > 0) setSelectedLayer(remaining[0].id)
+
+    success('Layer Dihapus', `"${layerName}" berhasil dihapus.`)
+  }
+
+  function handleSave() {
+    success('Tersimpan! 💾', 'Proyek berhasil disimpan.')
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-7.5rem)] -m-6 -mt-0">
@@ -59,7 +140,10 @@ export default function CanvasPage() {
             <span className="text-xs font-medium text-ink-4 w-10 text-center">{zoom}%</span>
             <button onClick={() => setZoom(Math.min(200, zoom + 25))} className="p-1.5 text-ink-4 hover:text-ink"><ZoomIn className="w-3.5 h-3.5" /></button>
           </div>
-          <button className="flex items-center gap-1.5 px-4 py-2 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors">
+          <button
+            onClick={handleSave}
+            className="flex items-center gap-1.5 px-4 py-2 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors"
+          >
             <Save className="w-3.5 h-3.5" /> Simpan
           </button>
         </div>
@@ -76,7 +160,7 @@ export default function CanvasPage() {
               </button>
             </div>
             <div className="space-y-1">
-              {demoProjects.map((p) => (
+              {projects.map((p) => (
                 <button
                   key={p.id}
                   onClick={() => setActiveProject(p.id)}
@@ -154,7 +238,7 @@ export default function CanvasPage() {
               <Layers className="w-3.5 h-3.5" /> Layers
             </h3>
             <div className="space-y-0.5">
-              {demoLayers.map((l) => (
+              {layers.map((l) => (
                 <button
                   key={l.id}
                   onClick={() => setSelectedLayer(l.id)}
@@ -181,17 +265,17 @@ export default function CanvasPage() {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { label: 'X', value: props.x, key: 'x' as const },
-                  { label: 'Y', value: props.y, key: 'y' as const },
-                  { label: 'W', value: props.w, key: 'w' as const },
-                  { label: 'H', value: props.h, key: 'h' as const },
+                  { label: 'X', value: currentProps.x, key: 'x' },
+                  { label: 'Y', value: currentProps.y, key: 'y' },
+                  { label: 'W', value: currentProps.w, key: 'w' },
+                  { label: 'H', value: currentProps.h, key: 'h' },
                 ].map((p) => (
                   <div key={p.label}>
                     <label className="text-[0.5625rem] text-ink-5 font-medium">{p.label}</label>
                     <input
                       type="number"
                       value={p.value}
-                      onChange={(e) => setProps({ ...props, [p.key]: Number(e.target.value) })}
+                      onChange={(e) => updateLayerProp(p.key, Number(e.target.value))}
                       className="w-full mt-0.5 px-2 py-1.5 bg-ink-9 border border-ink-7 rounded-lg text-xs text-ink outline-none focus:border-teal-600 transition-colors"
                     />
                   </div>
@@ -200,16 +284,19 @@ export default function CanvasPage() {
               <div>
                 <label className="text-[0.5625rem] text-ink-5 font-medium">Warna</label>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <input type="color" value={props.color} onChange={(e) => setProps({ ...props, color: e.target.value })} className="w-8 h-8 rounded-lg border border-ink-7 cursor-pointer" />
+                  <input type="color" value={currentProps.color} onChange={(e) => updateLayerProp('color', e.target.value)} className="w-8 h-8 rounded-lg border border-ink-7 cursor-pointer" />
                   <input
                     type="text"
-                    value={props.color}
-                    onChange={(e) => setProps({ ...props, color: e.target.value })}
+                    value={currentProps.color}
+                    onChange={(e) => updateLayerProp('color', e.target.value)}
                     className="flex-1 px-2 py-1.5 bg-ink-9 border border-ink-7 rounded-lg text-xs text-ink font-mono outline-none focus:border-teal-600 transition-colors"
                   />
                 </div>
               </div>
-              <button className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
+              <button
+                onClick={handleDeleteLayer}
+                className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+              >
                 <Trash2 className="w-3 h-3" /> Hapus Layer
               </button>
             </div>
@@ -236,27 +323,47 @@ export default function CanvasPage() {
             >
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-lg font-bold text-ink">Proyek Baru</h2>
-                <button onClick={() => setShowNewModal(false)} className="w-8 h-8 rounded-lg hover:bg-ink-9 flex items-center justify-center text-ink-4">
+                <button onClick={() => { setShowNewModal(false); setNameError('') }} className="w-8 h-8 rounded-lg hover:bg-ink-9 flex items-center justify-center text-ink-4">
                   <X className="w-4 h-4" />
                 </button>
               </div>
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-ink mb-1 block">Nama Proyek</label>
-                  <input type="text" placeholder="Contoh: Wireframe Homepage" className="w-full px-3 py-2.5 bg-ink-9 border border-ink-7 rounded-xl text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 transition-all" />
+                  <input
+                    type="text"
+                    value={newProjectName}
+                    onChange={(e) => { setNewProjectName(e.target.value); setNameError('') }}
+                    placeholder="Contoh: Wireframe Homepage"
+                    className={`w-full px-3 py-2.5 bg-ink-9 border rounded-xl text-sm outline-none focus:ring-2 transition-all ${
+                      nameError ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : 'border-ink-7 focus:border-teal-600 focus:ring-teal-600/20'
+                    }`}
+                    autoFocus
+                    onKeyDown={(e) => e.key === 'Enter' && handleCreateProject()}
+                  />
+                  {nameError && <p className="text-xs text-red-500 mt-1">{nameError}</p>}
                 </div>
                 <div>
                   <label className="text-sm font-medium text-ink mb-2 block">Template</label>
                   <div className="grid grid-cols-3 gap-2">
-                    {['Kosong', 'Wireframe', 'Mobile App'].map((t, i) => (
-                      <button key={t} className={`p-3 border rounded-xl text-xs font-medium text-center transition-all ${i === 0 ? 'border-teal-600 bg-teal-50 text-teal-700' : 'border-ink-7 text-ink-4 hover:border-ink-6'}`}>
-                        <div className={`w-full h-12 mb-2 rounded-lg ${i === 0 ? 'bg-teal-100' : 'bg-ink-8'}`} />
+                    {templates.map((t, i) => (
+                      <button
+                        key={t}
+                        onClick={() => setSelectedTemplate(i)}
+                        className={`p-3 border rounded-xl text-xs font-medium text-center transition-all ${
+                          selectedTemplate === i ? 'border-teal-600 bg-teal-50 text-teal-700' : 'border-ink-7 text-ink-4 hover:border-ink-6'
+                        }`}
+                      >
+                        <div className={`w-full h-12 mb-2 rounded-lg ${selectedTemplate === i ? 'bg-teal-100' : 'bg-ink-8'}`} />
                         {t}
                       </button>
                     ))}
                   </div>
                 </div>
-                <button onClick={() => setShowNewModal(false)} className="w-full py-3 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors">
+                <button
+                  onClick={handleCreateProject}
+                  className="w-full py-3 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors"
+                >
                   Buat Proyek
                 </button>
               </div>

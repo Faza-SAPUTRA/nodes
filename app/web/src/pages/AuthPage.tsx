@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
+import { useToast } from '../components/ui/Toast'
 
 export default function AuthPage() {
   const [tab, setTab] = useState<'login' | 'register'>('login')
@@ -11,20 +12,57 @@ export default function AuthPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
+  const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('nodes-remember') === 'true')
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const navigate = useNavigate()
   const login = useAuthStore((s) => s.login)
+  const { info } = useToast()
 
   const pwStrength = password.length === 0 ? 0 : password.length < 6 ? 1 : password.length < 10 ? 2 : /[A-Z]/.test(password) && /\d/.test(password) ? 4 : 3
   const pwColors = ['', '#ef4444', '#f59e0b', '#22c55e', '#0d9488']
   const pwLabels = ['', 'Lemah', 'Cukup', 'Kuat', 'Sangat kuat']
 
+  function validate(): boolean {
+    const errs: Record<string, string> = {}
+
+    if (!email.trim()) {
+      errs.email = 'Email wajib diisi'
+    } else if (!email.endsWith('@iti.ac.id')) {
+      errs.email = 'Gunakan email @iti.ac.id'
+    }
+
+    if (!password.trim()) {
+      errs.password = 'Password wajib diisi'
+    } else if (tab === 'register' && pwStrength < 2) {
+      errs.password = 'Password terlalu lemah, minimal 6 karakter'
+    }
+
+    if (tab === 'register' && !fullName.trim()) {
+      errs.fullName = 'Nama lengkap wajib diisi'
+    }
+
+    setErrors(errs)
+    return Object.keys(errs).length === 0
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!validate()) return
+
     setLoading(true)
+
+    // Persist remember me preference
+    localStorage.setItem('nodes-remember', rememberMe ? 'true' : 'false')
+
     setTimeout(() => {
       login(tab === 'register' ? fullName : 'Andi Prasetyo', email || 'andi@iti.ac.id')
       navigate('/app')
     }, 1200)
+  }
+
+  function handleForgotPassword(e: React.MouseEvent) {
+    e.preventDefault()
+    info('Lupa Password?', 'Silakan hubungi admin di nodes@iti.ac.id untuk reset password.')
   }
 
   const taglines = {
@@ -144,7 +182,7 @@ export default function AuthPage() {
             {(['login', 'register'] as const).map((t) => (
               <button
                 key={t}
-                onClick={() => setTab(t)}
+                onClick={() => { setTab(t); setErrors({}) }}
                 className={`relative z-10 flex-1 py-2.5 text-sm font-semibold rounded-[10px] transition-colors ${tab === t ? 'text-ink' : 'text-ink-4'}`}
               >
                 {t === 'login' ? 'Masuk' : 'Daftar'}
@@ -161,6 +199,7 @@ export default function AuthPage() {
               transition={{ duration: 0.3 }}
               onSubmit={handleSubmit}
               className="space-y-5"
+              noValidate
             >
               <div>
                 <h1 className="text-2xl font-extrabold text-ink tracking-tight">
@@ -172,16 +211,21 @@ export default function AuthPage() {
               </div>
 
               {tab === 'register' && (
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-5" />
-                  <input
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Nama lengkap"
-                    className="w-full pl-10 pr-4 py-3 bg-ink-9 border border-ink-7 rounded-xl text-sm text-ink placeholder:text-ink-5 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 outline-none transition-all"
-                    required
-                  />
+                <div>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-5" />
+                    <input
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => { setFullName(e.target.value); setErrors((prev) => { const { fullName, ...rest } = prev; return rest }) }}
+                      placeholder="Nama lengkap"
+                      className={`w-full pl-10 pr-4 py-3 bg-ink-9 border rounded-xl text-sm text-ink placeholder:text-ink-5 focus:ring-2 outline-none transition-all ${
+                        errors.fullName ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : 'border-ink-7 focus:border-teal-600 focus:ring-teal-600/20'
+                      }`}
+                      required
+                    />
+                  </div>
+                  {errors.fullName && <p className="text-xs text-red-500 mt-1">{errors.fullName}</p>}
                 </div>
               )}
 
@@ -191,13 +235,19 @@ export default function AuthPage() {
                   <input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => { setEmail(e.target.value); setErrors((prev) => { const { email, ...rest } = prev; return rest }) }}
                     placeholder="Email kampus"
-                    className="w-full pl-10 pr-4 py-3 bg-ink-9 border border-ink-7 rounded-xl text-sm text-ink placeholder:text-ink-5 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 outline-none transition-all"
+                    className={`w-full pl-10 pr-4 py-3 bg-ink-9 border rounded-xl text-sm text-ink placeholder:text-ink-5 focus:ring-2 outline-none transition-all ${
+                      errors.email ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : 'border-ink-7 focus:border-teal-600 focus:ring-teal-600/20'
+                    }`}
                     required
                   />
                 </div>
-                <span className="text-[0.6875rem] text-ink-5 mt-1 block">Gunakan email @iti.ac.id</span>
+                {errors.email ? (
+                  <p className="text-xs text-red-500 mt-1">{errors.email}</p>
+                ) : (
+                  <span className="text-[0.6875rem] text-ink-5 mt-1 block">Gunakan email @iti.ac.id</span>
+                )}
               </div>
 
               <div>
@@ -206,15 +256,18 @@ export default function AuthPage() {
                   <input
                     type={showPw ? 'text' : 'password'}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => { setPassword(e.target.value); setErrors((prev) => { const { password, ...rest } = prev; return rest }) }}
                     placeholder={tab === 'login' ? 'Password' : 'Buat password'}
-                    className="w-full pl-10 pr-12 py-3 bg-ink-9 border border-ink-7 rounded-xl text-sm text-ink placeholder:text-ink-5 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 outline-none transition-all"
+                    className={`w-full pl-10 pr-12 py-3 bg-ink-9 border rounded-xl text-sm text-ink placeholder:text-ink-5 focus:ring-2 outline-none transition-all ${
+                      errors.password ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : 'border-ink-7 focus:border-teal-600 focus:ring-teal-600/20'
+                    }`}
                     required
                   />
                   <button type="button" onClick={() => setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-5 hover:text-ink-4">
                     {showPw ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
                   </button>
                 </div>
+                {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
 
                 {tab === 'register' && password.length > 0 && (
                   <div className="mt-2 flex items-center gap-2">
@@ -234,10 +287,15 @@ export default function AuthPage() {
               {tab === 'login' && (
                 <div className="flex items-center justify-between">
                   <label className="flex items-center gap-2 text-sm text-ink-4 cursor-pointer">
-                    <input type="checkbox" className="w-4 h-4 rounded border-ink-6 text-teal-600 focus:ring-teal-600/20" />
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="w-4 h-4 rounded border-ink-6 text-teal-600 focus:ring-teal-600/20"
+                    />
                     Ingat saya
                   </label>
-                  <a href="#" className="text-sm text-teal-600 font-medium hover:underline">Lupa password?</a>
+                  <button type="button" onClick={handleForgotPassword} className="text-sm text-teal-600 font-medium hover:underline">Lupa password?</button>
                 </div>
               )}
 

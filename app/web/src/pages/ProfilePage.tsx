@@ -1,10 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Activity, Star, Calendar, Trophy,
   Share2,
 } from 'lucide-react'
 import clsx from 'clsx'
+import { useAuthStore } from '../store/authStore'
+import { useToast } from '../components/ui/Toast'
+import ConfirmDialog from '../components/ui/ConfirmDialog'
 
 /* ─── Types ─── */
 type TabKey = 'progress' | 'badges' | 'projects' | 'settings'
@@ -115,7 +119,7 @@ function AnimatedCount({ target }: { target: number }) {
     function step(now: number) {
       const elapsed = now - start
       const progress = Math.min(elapsed / duration, 1)
-      const eased = 1 - Math.pow(1 - progress, 3) // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3)
       setCount(Math.round(eased * target))
       if (progress < 1) frame = requestAnimationFrame(step)
     }
@@ -131,6 +135,7 @@ function AnimatedCount({ target }: { target: number }) {
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<TabKey>('progress')
   const [heatmapCells] = useState(generateHeatmap)
+  const { success } = useToast()
 
   const tabItems: { key: TabKey; label: string }[] = [
     { key: 'progress', label: 'Progres' },
@@ -138,6 +143,12 @@ export default function ProfilePage() {
     { key: 'projects', label: 'Proyek' },
     { key: 'settings', label: 'Pengaturan' },
   ]
+
+  function handleShare() {
+    const url = window.location.origin + '/app/profil'
+    navigator.clipboard.writeText(url)
+    success('Link Tersalin!', 'Link profil berhasil disalin ke clipboard.')
+  }
 
   return (
     <div className="h-full overflow-y-auto overflow-x-hidden">
@@ -189,7 +200,10 @@ export default function ProfilePage() {
             >
               Edit Profil
             </button>
-            <button className="w-9 h-9 rounded-lg border border-ink-7 flex items-center justify-center text-ink-4 hover:border-teal-600 hover:text-teal-600 transition-colors">
+            <button
+              onClick={handleShare}
+              className="w-9 h-9 rounded-lg border border-ink-7 flex items-center justify-center text-ink-4 hover:border-teal-600 hover:text-teal-600 transition-colors"
+            >
               <Share2 size={14} />
             </button>
           </motion.div>
@@ -373,6 +387,8 @@ function BadgesTab({ badges }: { badges: Badge[] }) {
    TAB: Projects
    ══════════════════════════════════════ */
 function ProjectsTab({ projects }: { projects: Project[] }) {
+  const navigate = useNavigate()
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -386,6 +402,7 @@ function ProjectsTab({ projects }: { projects: Project[] }) {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.06 }}
+          onClick={() => navigate('/app/kanvas')}
           className="bg-white border border-ink-7 rounded-xl overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-0.5 transition-all"
         >
           <div className="h-[100px] flex items-end p-2.5" style={{ background: p.gradient }}>
@@ -413,6 +430,7 @@ function ProjectsTab({ projects }: { projects: Project[] }) {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: projects.length * 0.06 }}
+        onClick={() => navigate('/app/kanvas')}
         className="border border-dashed border-ink-5 rounded-xl overflow-hidden cursor-pointer hover:border-teal-600 transition-colors"
       >
         <div className="h-[100px] flex items-center justify-center text-ink-5">
@@ -431,10 +449,48 @@ function ProjectsTab({ projects }: { projects: Project[] }) {
    TAB: Settings
    ══════════════════════════════════════ */
 function SettingsTab() {
-  const [darkMode, setDarkMode] = useState(false)
-  const [emailNotif, setEmailNotif] = useState(true)
-  const [pushNotif, setPushNotif] = useState(true)
-  const [publicProfile, setPublicProfile] = useState(true)
+  const user = useAuthStore((s) => s.user)
+  const login = useAuthStore((s) => s.login)
+  const logout = useAuthStore((s) => s.logout)
+  const navigate = useNavigate()
+  const { success, warning } = useToast()
+
+  // Load persisted preferences
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('nodes-dark') === 'true')
+  const [emailNotif, setEmailNotif] = useState(() => localStorage.getItem('nodes-email-notif') !== 'false')
+  const [pushNotif, setPushNotif] = useState(() => localStorage.getItem('nodes-push-notif') !== 'false')
+  const [publicProfile, setPublicProfile] = useState(() => localStorage.getItem('nodes-public-profile') !== 'false')
+  const [language, setLanguage] = useState(() => localStorage.getItem('nodes-language') || 'id')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
+  // Controlled form inputs
+  const [name, setName] = useState(user?.name || 'Andi Prasetyo')
+  const [email, setEmail] = useState(user?.email || 'andi@iti.ac.id')
+  const [username, setUsername] = useState('@andiprasetyo')
+  const [bio, setBio] = useState('UI/UX Design Enthusiast · Mahasiswa Informatika ITI · Semester 5 · Belajar UI/UX di NODES')
+
+  // Persist toggles
+  useEffect(() => { localStorage.setItem('nodes-dark', String(darkMode)) }, [darkMode])
+  useEffect(() => { localStorage.setItem('nodes-email-notif', String(emailNotif)) }, [emailNotif])
+  useEffect(() => { localStorage.setItem('nodes-push-notif', String(pushNotif)) }, [pushNotif])
+  useEffect(() => { localStorage.setItem('nodes-public-profile', String(publicProfile)) }, [publicProfile])
+  useEffect(() => { localStorage.setItem('nodes-language', language) }, [language])
+
+  // Dark mode toggle
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode)
+  }, [darkMode])
+
+  function handleSaveProfile() {
+    login(name, email)
+    success('Profil Tersimpan! ✅', 'Perubahan profil berhasil disimpan.')
+  }
+
+  function handleDeleteAccount() {
+    logout()
+    navigate('/auth')
+    warning('Akun Dihapus', 'Akun kamu telah dihapus.')
+  }
 
   return (
     <motion.div
@@ -449,25 +505,26 @@ function SettingsTab() {
         <div className="space-y-3.5">
           <div>
             <label className="block text-[11px] font-semibold text-ink-4 mb-1">Nama Lengkap</label>
-            <input defaultValue="Andi Prasetyo" className="w-full px-3 py-2 rounded-lg border border-ink-7 text-xs outline-none focus:border-teal-600 transition-colors" />
+            <input value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-ink-7 text-xs outline-none focus:border-teal-600 transition-colors" />
           </div>
           <div>
             <label className="block text-[11px] font-semibold text-ink-4 mb-1">Email</label>
-            <input defaultValue="andi.prasetyo@student.iti.ac.id" type="email" className="w-full px-3 py-2 rounded-lg border border-ink-7 text-xs outline-none focus:border-teal-600 transition-colors" />
+            <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="w-full px-3 py-2 rounded-lg border border-ink-7 text-xs outline-none focus:border-teal-600 transition-colors" />
           </div>
           <div>
             <label className="block text-[11px] font-semibold text-ink-4 mb-1">Username</label>
-            <input defaultValue="@andiprasetyo" className="w-full px-3 py-2 rounded-lg border border-ink-7 text-xs outline-none focus:border-teal-600 transition-colors" />
+            <input value={username} onChange={(e) => setUsername(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-ink-7 text-xs outline-none focus:border-teal-600 transition-colors" />
           </div>
           <div>
             <label className="block text-[11px] font-semibold text-ink-4 mb-1">Bio</label>
             <textarea
-              defaultValue="UI/UX Design Enthusiast · Mahasiswa Informatika ITI · Semester 5 · Belajar UI/UX di NODES"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
               rows={3}
               className="w-full px-3 py-2 rounded-lg border border-ink-7 text-xs outline-none focus:border-teal-600 transition-colors resize-y"
             />
           </div>
-          <button className="px-5 py-2.5 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700 transition-colors">
+          <button onClick={handleSaveProfile} className="px-5 py-2.5 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700 transition-colors">
             Simpan Perubahan
           </button>
         </div>
@@ -483,16 +540,34 @@ function SettingsTab() {
         <ToggleRow label="Profil Publik" checked={publicProfile} onChange={setPublicProfile} />
 
         <h3 className="text-[13px] font-bold mt-5 mb-3">Bahasa</h3>
-        <select className="w-full px-3 py-2 rounded-lg border border-ink-7 text-xs outline-none focus:border-teal-600 transition-colors appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2210%22%20height%3D%2210%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%20fill%3D%22none%22%20stroke%3D%22%2394A3B8%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_10px_center] pr-7 cursor-pointer">
-          <option>Bahasa Indonesia</option>
-          <option>English</option>
+        <select
+          value={language}
+          onChange={(e) => setLanguage(e.target.value)}
+          className="w-full px-3 py-2 rounded-lg border border-ink-7 text-xs outline-none focus:border-teal-600 transition-colors appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2210%22%20height%3D%2210%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%20fill%3D%22none%22%20stroke%3D%22%2394A3B8%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_10px_center] pr-7 cursor-pointer"
+        >
+          <option value="id">Bahasa Indonesia</option>
+          <option value="en">English</option>
         </select>
 
         <h3 className="text-[13px] font-bold mt-5 mb-3 text-red-500">Zona Bahaya</h3>
-        <button className="px-4 py-2 rounded-lg text-[11px] font-semibold text-red-500 border border-red-500/20 hover:bg-red-500/[.06] transition-colors">
+        <button
+          onClick={() => setShowDeleteConfirm(true)}
+          className="px-4 py-2 rounded-lg text-[11px] font-semibold text-red-500 border border-red-500/20 hover:bg-red-500/[.06] transition-colors"
+        >
           Hapus Akun
         </button>
       </div>
+
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteAccount}
+        title="Hapus Akun?"
+        description="Tindakan ini tidak dapat dibatalkan. Semua data, progress belajar, dan proyek kamu akan dihapus secara permanen."
+        confirmLabel="Ya, Hapus Akun"
+        cancelLabel="Batal"
+        variant="danger"
+      />
     </motion.div>
   )
 }
