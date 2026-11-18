@@ -46,6 +46,11 @@ venv/
 # Uploads
 app/server/data/uploads/
 
+# Vercel
+.vercel/
+
 # Misc
 .cache/
 *.png.bak
+
+.vercel
