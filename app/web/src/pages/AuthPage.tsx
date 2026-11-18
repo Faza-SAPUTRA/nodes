@@ -31,8 +31,8 @@ export default function AuthPage() {
 
     if (!email.trim()) {
       errs.email = 'Email wajib diisi'
-    } else if (!email.endsWith('@iti.ac.id')) {
-      errs.email = 'Gunakan email @iti.ac.id'
+    } else if (!email.includes('@') || !email.includes('.')) {
+      errs.email = 'Format email tidak valid'
     }
 
     if (!password.trim()) {
@@ -77,7 +77,7 @@ export default function AuthPage() {
 
   function handleForgotPassword(e: React.MouseEvent) {
     e.preventDefault()
-    info('Lupa Password?', 'Silakan hubungi admin di nodes@iti.ac.id untuk reset password.')
+    info('Lupa Password?', 'Silakan hubungi admin untuk reset password.')
   }
 
   const taglines = {
@@ -268,7 +268,7 @@ export default function AuthPage() {
                 {errors.email ? (
                   <p className="text-xs text-red-500 mt-1">{errors.email}</p>
                 ) : (
-                  <span className="text-[0.6875rem] text-ink-5 mt-1 block">Gunakan email @iti.ac.id</span>
+                  <span className="text-[0.6875rem] text-ink-5 mt-1 block">Gunakan email aktif kamu</span>
                 )}
               </div>
 
