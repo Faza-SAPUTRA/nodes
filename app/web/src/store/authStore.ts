@@ -92,27 +92,47 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (error) {
         set({ loading: false })
-        // Map Supabase errors to user-friendly Indonesian messages
+
+        // "Database error saving new user" = trigger failed, but we can handle it
+        if (error.message.includes('Database error')) {
+          // Try signing in — user might already exist from a previous partial signup
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          })
+
+          if (signInError) {
+            // Truly a new user but DB trigger failed — advise retry
+            return { error: 'Gagal mendaftar. Database sedang bermasalah, coba lagi dalam beberapa saat.' }
+          }
+
+          if (signInData.user) {
+            // User exists, ensure profile exists
+            await ensureProfile(signInData.user.id, email, fullName)
+
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', signInData.user.id)
+              .single()
+
+            set({
+              user: signInData.user,
+              session: signInData.session,
+              profile: profile || null,
+              loading: false,
+            })
+            return { error: null }
+          }
+        }
+
         const msg = mapAuthError(error.message)
         return { error: msg }
       }
 
       if (data.user) {
-        // Create profile
-        const username = '@' + fullName.toLowerCase().replace(/\s+/g, '').slice(0, 15)
-
-        await supabase.from('profiles').upsert({
-          id: data.user.id,
-          email,
-          full_name: fullName,
-          username,
-          bio: `Mahasiswa ITI · Belajar UI/UX di NODES`,
-          role: 'Mahasiswa',
-          level: 1,
-          xp: 0,
-          streak_days: 0,
-          active_days: 0,
-        } as Record<string, unknown>)
+        // Ensure profile exists (handles both trigger success and failure cases)
+        await ensureProfile(data.user.id, email, fullName)
 
         // Create default preferences
         await supabase.from('user_preferences').upsert({
@@ -139,8 +159,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             id: data.user.id,
             email,
             full_name: fullName,
-            username,
-            bio: `Mahasiswa ITI · Belajar UI/UX di NODES`,
+            username: '@' + fullName.toLowerCase().replace(/\s+/g, '').slice(0, 15),
+            bio: `Mahasiswa · Belajar UI/UX di NODES`,
             avatar_url: null,
             role: 'Mahasiswa',
             level: 1,
@@ -271,6 +291,41 @@ function mapAuthError(msg: string): string {
   if (msg.includes('Password should be at least')) return 'Password minimal 6 karakter.'
   if (msg.includes('rate limit')) return 'Terlalu banyak percobaan. Tunggu beberapa saat.'
   if (msg.includes('Email rate limit')) return 'Terlalu banyak email terkirim. Tunggu beberapa saat.'
+  if (msg.includes('Database error')) return 'Gagal mendaftar. Database sedang bermasalah, coba lagi.'
   if (msg.includes('invalid')) return 'Format email tidak valid.'
   return msg
+}
+
+/* Ensure profile row exists for a user (handles both trigger-created and manual cases) */
+async function ensureProfile(userId: string, email: string, fullName: string) {
+  const username = '@' + fullName.toLowerCase().replace(/\s+/g, '').slice(0, 15)
+
+  // Check if profile already exists (created by DB trigger)
+  const { data: existing } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('id', userId)
+    .single()
+
+  if (existing) {
+    // Profile exists (trigger worked), just update full_name if needed
+    await supabase
+      .from('profiles')
+      .update({ full_name: fullName, username, email } as Record<string, unknown>)
+      .eq('id', userId)
+  } else {
+    // Profile doesn't exist (trigger failed), create it
+    await supabase.from('profiles').insert({
+      id: userId,
+      email,
+      full_name: fullName,
+      username,
+      bio: 'Mahasiswa · Belajar UI/UX di NODES',
+      role: 'Mahasiswa',
+      level: 1,
+      xp: 0,
+      streak_days: 0,
+      active_days: 0,
+    } as Record<string, unknown>)
+  }
 }
