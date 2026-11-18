@@ -36,10 +36,19 @@ export default function App() {
             <Route index element={<DashboardPage />} />
             <Route path="modul" element={<ModulesPage />} />
             <Route path="modul/:slug" element={<ModuleDetailPage />} />
-            <Route path="kanvas" element={<CanvasPage />} />
-            <Route path="kolaborasi" element={<CollabPage />} />
             <Route path="profil" element={<ProfilePage />} />
           </Route>
+          {/* Canvas & Collab: full viewport without sidebar/topbar */}
+          <Route path="/app/kanvas" element={
+            <AuthGuard>
+              <CanvasPage />
+            </AuthGuard>
+          } />
+          <Route path="/app/kolaborasi" element={
+            <AuthGuard>
+              <CollabPage />
+            </AuthGuard>
+          } />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </ToastProvider>

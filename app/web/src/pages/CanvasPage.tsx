@@ -596,7 +596,7 @@ export default function CanvasPage() {
   const canRedo = historyIndex < history.length - 1
 
   return (
-    <div className="flex flex-col h-[calc(100vh-7.5rem)] -m-6 -mt-0">
+    <div className="flex flex-col h-screen w-screen fixed inset-0 bg-white z-50">
       {/* ═══ Top toolbar ═══ */}
       <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-ink-7 shrink-0">
         <div className="flex items-center gap-1">

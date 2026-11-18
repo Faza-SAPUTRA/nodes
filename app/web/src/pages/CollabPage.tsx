@@ -302,7 +302,7 @@ export default function CollabPage() {
   const deviceWidth = device === 'desktop' ? 'max-w-[900px]' : device === 'tablet' ? 'max-w-[600px]' : 'max-w-[375px]'
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-screen w-screen fixed inset-0 bg-white z-50">
       {/* ─── Room Header ─── */}
       <header className="flex items-center justify-between px-3 sm:px-5 py-2.5 bg-white border-b border-ink-7 shrink-0 gap-3">
         <div className="flex items-center gap-3 min-w-0">
