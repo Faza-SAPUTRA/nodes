@@ -13,7 +13,9 @@ const navItems = [
 
 export default function Sidebar() {
   const { expanded, toggle } = useSidebarStore()
-  const user = useAuthStore((s) => s.user)
+  const profile = useAuthStore((s) => s.profile)
+  const displayName = useAuthStore((s) => s.displayName)
+  const initials = useAuthStore((s) => s.initials)
   const location = useLocation()
 
   return (
@@ -116,7 +118,7 @@ export default function Sidebar() {
           className="group flex items-center gap-2.5 px-2 py-2 rounded-[10px] hover:bg-ink-8 transition-colors whitespace-nowrap overflow-hidden no-underline"
         >
           <div className="w-8 h-8 rounded-[10px] bg-teal-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-            {user?.initials ?? '?'}
+            {initials()}
           </div>
           <div
             className={clsx(
@@ -124,8 +126,8 @@ export default function Sidebar() {
               expanded ? 'opacity-100' : 'opacity-0 pointer-events-none'
             )}
           >
-            <span className="text-xs font-bold text-ink leading-tight">{user?.name}</span>
-            <span className="text-[0.625rem] text-ink-5 leading-tight">{user?.role}</span>
+            <span className="text-xs font-bold text-ink leading-tight">{displayName()}</span>
+            <span className="text-[0.625rem] text-ink-5 leading-tight">{profile?.role || 'Mahasiswa'}</span>
           </div>
           {!expanded && (
             <div className="absolute left-[calc(3.5rem+4px)] top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg bg-ink text-white text-[0.6875rem] font-semibold whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 shadow-lg z-20">

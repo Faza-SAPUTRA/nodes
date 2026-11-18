@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useInView } from 'framer-motion'
 import { ArrowRight, BookOpen, Check, Lock, UserPlus } from 'lucide-react'
+import { useAuthStore } from '../store/authStore'
 import { useToast } from '../components/ui/Toast'
 
 function Reveal({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
@@ -20,6 +21,7 @@ export default function DashboardPage() {
   const [progPct, setProgPct] = useState(0)
   const [ccPct, setCcPct] = useState(0)
   const { warning } = useToast()
+  const displayName = useAuthStore((s) => s.displayName)
 
   useEffect(() => {
     const h = new Date().getHours()
@@ -66,7 +68,7 @@ export default function DashboardPage() {
         <section className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-2">
           <div>
             <span className="text-sm text-ink-5">{greeting}</span>
-            <h1 className="text-3xl font-extrabold text-ink tracking-tight mt-1">Andi <span className="inline-block animate-[wave_.5s_ease-in-out_2]">👋</span></h1>
+            <h1 className="text-3xl font-extrabold text-ink tracking-tight mt-1">{displayName().split(' ')[0]} <span className="inline-block animate-[wave_.5s_ease-in-out_2]">👋</span></h1>
             <p className="text-sm text-ink-4 mt-1">Kamu punya <strong className="text-ink">8 sesi</strong> yang belum selesai. Yuk lanjutkan!</p>
           </div>
           <div className="flex items-center gap-4">

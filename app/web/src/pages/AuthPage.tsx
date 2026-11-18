@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight } from 'lucide-react'
@@ -8,15 +8,19 @@ import { useToast } from '../components/ui/Toast'
 export default function AuthPage() {
   const [tab, setTab] = useState<'login' | 'register'>('login')
   const [showPw, setShowPw] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('nodes-remember') === 'true')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const navigate = useNavigate()
-  const login = useAuthStore((s) => s.login)
-  const { info } = useToast()
+  const { signIn, signUp, loading, user } = useAuthStore()
+  const { info, error: showError } = useToast()
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) navigate('/app', { replace: true })
+  }, [user, navigate])
 
   const pwStrength = password.length === 0 ? 0 : password.length < 6 ? 1 : password.length < 10 ? 2 : /[A-Z]/.test(password) && /\d/.test(password) ? 4 : 3
   const pwColors = ['', '#ef4444', '#f59e0b', '#22c55e', '#0d9488']
@@ -45,19 +49,30 @@ export default function AuthPage() {
     return Object.keys(errs).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validate()) return
-
-    setLoading(true)
 
     // Persist remember me preference
     localStorage.setItem('nodes-remember', rememberMe ? 'true' : 'false')
 
-    setTimeout(() => {
-      login(tab === 'register' ? fullName : 'Andi Prasetyo', email || 'andi@iti.ac.id')
-      navigate('/app')
-    }, 1200)
+    if (tab === 'login') {
+      const { error } = await signIn(email, password)
+      if (error) {
+        setErrors({ form: error })
+        showError('Login Gagal', error)
+      } else {
+        navigate('/app')
+      }
+    } else {
+      const { error } = await signUp(email, password, fullName)
+      if (error) {
+        setErrors({ form: error })
+        showError('Registrasi Gagal', error)
+      } else {
+        navigate('/app')
+      }
+    }
   }
 
   function handleForgotPassword(e: React.MouseEvent) {
@@ -210,6 +225,13 @@ export default function AuthPage() {
                 </p>
               </div>
 
+              {/* General form error */}
+              {errors.form && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+                  {errors.form}
+                </div>
+              )}
+
               {tab === 'register' && (
                 <div>
                   <div className="relative">
@@ -305,9 +327,7 @@ export default function AuthPage() {
                 className="w-full flex items-center justify-center gap-2 py-3.5 bg-ink text-white font-semibold rounded-xl hover:bg-teal-600 transition-colors disabled:opacity-70"
               >
                 {loading ? (
-                  <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83" />
-                  </svg>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
                     {tab === 'login' ? 'Masuk' : 'Buat Akun'}

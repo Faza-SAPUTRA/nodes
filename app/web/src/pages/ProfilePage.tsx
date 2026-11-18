@@ -9,6 +9,7 @@ import clsx from 'clsx'
 import { useAuthStore } from '../store/authStore'
 import { useToast } from '../components/ui/Toast'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
+import { supabase } from '../lib/supabase'
 
 /* ─── Types ─── */
 type TabKey = 'progress' | 'badges' | 'projects' | 'settings'
@@ -46,10 +47,10 @@ interface TimelineEvent {
 
 /* ─── Data ─── */
 const stats = [
-  { label: 'Total XP', value: 1247, icon: Activity, color: '#0D9488', bg: 'rgba(13,148,136,.1)' },
-  { label: 'Streak Hari', value: 14, icon: Star, color: '#7C3AED', bg: 'rgba(124,58,237,.1)' },
-  { label: 'Hari Aktif', value: 23, icon: Calendar, color: '#EC4899', bg: 'rgba(236,72,153,.1)' },
-  { label: 'Badges', value: 8, icon: Trophy, color: '#F59E0B', bg: 'rgba(245,158,11,.1)' },
+  { label: 'Total XP', valueKey: 'xp' as const, fallback: 1247, icon: Activity, color: '#0D9488', bg: 'rgba(13,148,136,.1)' },
+  { label: 'Streak Hari', valueKey: 'streak_days' as const, fallback: 14, icon: Star, color: '#7C3AED', bg: 'rgba(124,58,237,.1)' },
+  { label: 'Hari Aktif', valueKey: 'active_days' as const, fallback: 23, icon: Calendar, color: '#EC4899', bg: 'rgba(236,72,153,.1)' },
+  { label: 'Badges', valueKey: null, fallback: 8, icon: Trophy, color: '#F59E0B', bg: 'rgba(245,158,11,.1)' },
 ]
 
 const progressItems: ProgressItem[] = [
@@ -136,6 +137,9 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<TabKey>('progress')
   const [heatmapCells] = useState(generateHeatmap)
   const { success } = useToast()
+  const profile = useAuthStore((s) => s.profile)
+  const displayName = useAuthStore((s) => s.displayName)
+  const initials = useAuthStore((s) => s.initials)
 
   const tabItems: { key: TabKey; label: string }[] = [
     { key: 'progress', label: 'Progres' },
@@ -164,9 +168,9 @@ export default function ProfilePage() {
             className="relative shrink-0"
           >
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-300 flex items-center justify-center text-white text-[1.75rem] font-extrabold shadow-[0_8px_24px_rgba(13,148,136,.2)]">
-              AP
+              {initials()}
             </div>
-            <span className="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-md bg-ink text-teal-300 text-[9px] font-bold border-2 border-ink-9">Lv.7</span>
+            <span className="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-md bg-ink text-teal-300 text-[9px] font-bold border-2 border-ink-9">Lv.{profile?.level ?? 7}</span>
           </motion.div>
 
           {/* Info */}
@@ -176,9 +180,9 @@ export default function ProfilePage() {
             transition={{ delay: 0.1, duration: 0.35 }}
             className="flex-1 min-w-0 text-center sm:text-left"
           >
-            <h1 className="text-2xl font-extrabold tracking-tight">Andi Prasetyo</h1>
+            <h1 className="text-2xl font-extrabold tracking-tight">{displayName()}</h1>
             <p className="text-xs text-ink-4 mt-1 leading-relaxed">
-              UI/UX Design Enthusiast · Mahasiswa Informatika ITI · Semester 5 · Belajar UI/UX di NODES
+              {profile?.bio || 'UI/UX Design Enthusiast · Mahasiswa Informatika ITI · Semester 5 · Belajar UI/UX di NODES'}
             </p>
             <div className="flex gap-1.5 mt-2 flex-wrap justify-center sm:justify-start">
               {tags.map(t => (
@@ -214,6 +218,7 @@ export default function ProfilePage() {
       <section className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-4 sm:px-8 pb-5 max-w-[1024px] mx-auto">
         {stats.map((s, i) => {
           const Icon = s.icon
+          const val = s.valueKey && profile ? (profile as Record<string, unknown>)[s.valueKey] as number : s.fallback
           return (
             <motion.div
               key={s.label}
@@ -226,7 +231,7 @@ export default function ProfilePage() {
                 <Icon size={18} />
               </div>
               <div className="flex flex-col">
-                <span className="text-xl font-extrabold tracking-tight"><AnimatedCount target={s.value} /></span>
+                <span className="text-xl font-extrabold tracking-tight"><AnimatedCount target={val ?? s.fallback} /></span>
                 <span className="text-[10px] text-ink-4 font-medium mt-0.5">{s.label}</span>
               </div>
             </motion.div>
@@ -449,11 +454,11 @@ function ProjectsTab({ projects }: { projects: Project[] }) {
    TAB: Settings
    ══════════════════════════════════════ */
 function SettingsTab() {
-  const user = useAuthStore((s) => s.user)
-  const login = useAuthStore((s) => s.login)
-  const logout = useAuthStore((s) => s.logout)
+  const profile = useAuthStore((s) => s.profile)
+  const updateProfile = useAuthStore((s) => s.updateProfile)
+  const deleteAccount = useAuthStore((s) => s.deleteAccount)
   const navigate = useNavigate()
-  const { success, warning } = useToast()
+  const { success, warning, error: showError } = useToast()
 
   // Load persisted preferences
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('nodes-dark') === 'true')
@@ -462,12 +467,23 @@ function SettingsTab() {
   const [publicProfile, setPublicProfile] = useState(() => localStorage.getItem('nodes-public-profile') !== 'false')
   const [language, setLanguage] = useState(() => localStorage.getItem('nodes-language') || 'id')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   // Controlled form inputs
-  const [name, setName] = useState(user?.name || 'Andi Prasetyo')
-  const [email, setEmail] = useState(user?.email || 'andi@iti.ac.id')
-  const [username, setUsername] = useState('@andiprasetyo')
-  const [bio, setBio] = useState('UI/UX Design Enthusiast · Mahasiswa Informatika ITI · Semester 5 · Belajar UI/UX di NODES')
+  const [name, setName] = useState(profile?.full_name || 'User')
+  const [email, setEmail] = useState(profile?.email || '')
+  const [username, setUsername] = useState(profile?.username || '@user')
+  const [bio, setBio] = useState(profile?.bio || '')
+
+  // Sync when profile changes
+  useEffect(() => {
+    if (profile) {
+      setName(profile.full_name)
+      setEmail(profile.email)
+      setUsername(profile.username || '@user')
+      setBio(profile.bio || '')
+    }
+  }, [profile])
 
   // Persist toggles
   useEffect(() => { localStorage.setItem('nodes-dark', String(darkMode)) }, [darkMode])
@@ -481,15 +497,43 @@ function SettingsTab() {
     document.documentElement.classList.toggle('dark', darkMode)
   }, [darkMode])
 
-  function handleSaveProfile() {
-    login(name, email)
-    success('Profil Tersimpan! ✅', 'Perubahan profil berhasil disimpan.')
+  async function handleSaveProfile() {
+    setSaving(true)
+    const { error } = await updateProfile({
+      full_name: name,
+      email,
+      username,
+      bio,
+    })
+    setSaving(false)
+
+    if (error) {
+      showError('Gagal Menyimpan', error)
+    } else {
+      // Also save preferences to Supabase
+      const { user } = useAuthStore.getState()
+      if (user) {
+        await supabase.from('user_preferences').upsert({
+          user_id: user.id,
+          dark_mode: darkMode,
+          email_notif: emailNotif,
+          push_notif: pushNotif,
+          public_profile: publicProfile,
+          language,
+        } as Record<string, unknown>)
+      }
+      success('Profil Tersimpan! ✅', 'Perubahan profil berhasil disimpan.')
+    }
   }
 
-  function handleDeleteAccount() {
-    logout()
-    navigate('/auth')
-    warning('Akun Dihapus', 'Akun kamu telah dihapus.')
+  async function handleDeleteAccount() {
+    const { error } = await deleteAccount()
+    if (error) {
+      showError('Gagal', error)
+    } else {
+      navigate('/auth')
+      warning('Akun Dihapus', 'Akun kamu telah dihapus.')
+    }
   }
 
   return (
@@ -524,8 +568,8 @@ function SettingsTab() {
               className="w-full px-3 py-2 rounded-lg border border-ink-7 text-xs outline-none focus:border-teal-600 transition-colors resize-y"
             />
           </div>
-          <button onClick={handleSaveProfile} className="px-5 py-2.5 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700 transition-colors">
-            Simpan Perubahan
+          <button onClick={handleSaveProfile} disabled={saving} className="px-5 py-2.5 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700 transition-colors disabled:opacity-70">
+            {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
           </button>
         </div>
       </div>
