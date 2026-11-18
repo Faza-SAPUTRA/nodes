@@ -1,539 +1,269 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Check,
-  ChevronDown,
-  Copy,
-  Layers as LayersIcon,
-  MousePointer2,
-  Plus,
-  Redo2,
-  Save,
-  Trash2,
-  Type as TypeIcon,
-  Undo2,
-  ZoomIn,
-  ZoomOut,
-} from 'lucide-react';
-import { api, errorMessage } from '../lib/api';
-import { Empty, LoadError, Modal, SkeletonBlock, Spinner, useToast } from '../components/ui';
-import type { CanvasDoc, Layer, Project, ProjectMeta } from '../lib/types';
-import { clamp } from '../lib/format';
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { MousePointer2, Square, Type, Hand, Pen, Plus, Layers, Save, ZoomIn, ZoomOut, ChevronRight, X, Trash2 } from 'lucide-react'
 
-const DEFAULT_DOC: CanvasDoc = {
-  version: 1,
-  frame: { width: 1280, height: 800, label: 'Frame baru' },
-  layers: [],
-};
+const tools = [
+  { id: 'select', icon: MousePointer2, label: 'Select' },
+  { id: 'frame', icon: Square, label: 'Frame' },
+  { id: 'text', icon: Type, label: 'Text' },
+  { id: 'hand', icon: Hand, label: 'Hand' },
+  { id: 'pen', icon: Pen, label: 'Pen' },
+]
 
-const PALETTE = ['#0d9488', '#0c1116', '#b45309', '#0369a1', '#b42318', '#ffffff'];
+const demoProjects = [
+  { id: 1, name: 'Landing Page Redesign', date: '2 jam lalu', color: 'bg-teal-600' },
+  { id: 2, name: 'Wireframe Dashboard', date: 'Kemarin', color: 'bg-blue-500' },
+  { id: 3, name: 'Color Palette Study', date: '3 hari lalu', color: 'bg-purple-500' },
+]
 
-/** Kanvas praktik: tambah layer, geser, ubah properti, simpan ke server. */
+const demoLayers = [
+  { id: 1, name: 'Header Frame', type: 'Frame', visible: true },
+  { id: 2, name: 'Logo Text', type: 'Text', visible: true },
+  { id: 3, name: 'Hero Rectangle', type: 'Rectangle', visible: true },
+  { id: 4, name: 'CTA Button', type: 'Frame', visible: false },
+]
+
 export default function CanvasPage() {
-  const toast = useToast();
-  const [projects, setProjects] = useState<ProjectMeta[]>([]);
-  const [activeId, setActiveId] = useState<string>('');
-  const [doc, setDoc] = useState<CanvasDoc>(DEFAULT_DOC);
-  const [selected, setSelected] = useState<string>('');
-  const [zoom, setZoom] = useState(0.7);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [dirty, setDirty] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
-  const [nameModal, setNameModal] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [nameError, setNameError] = useState('');
-
-  const history = useRef<CanvasDoc[]>([]);
-  const future = useRef<CanvasDoc[]>([]);
-  const [histLen, setHistLen] = useState(0);
-  const [futLen, setFutLen] = useState(0);
-  const dragRef = useRef<{ id: string; startX: number; startY: number; ox: number; oy: number; snapshotTaken: boolean } | null>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    setError('');
-    api<{ projects: ProjectMeta[] }>('/api/projects')
-      .then(async (res) => {
-        if (!alive) return;
-        setProjects(res.projects);
-        if (res.projects.length) {
-          const first = await api<{ project: Project }>(`/api/projects/${res.projects[0].id}`);
-          if (!alive) return;
-          setActiveId(first.project.id);
-          setDoc(first.project.data ?? DEFAULT_DOC);
-        }
-      })
-      .catch((err) => {
-        if (alive) setError(errorMessage(err));
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [reloadKey]);
-
-  const openProject = async (id: string) => {
-    if (dirty && !window.confirm('Perubahan belum disimpan. Tetap pindah proyek?')) return;
-    try {
-      const res = await api<{ project: Project }>(`/api/projects/${id}`);
-      setActiveId(id);
-      setDoc(res.project.data ?? DEFAULT_DOC);
-      setSelected('');
-      setDirty(false);
-      history.current = [];
-      future.current = [];
-    } catch (err) {
-      toast.error('Gagal membuka proyek', errorMessage(err));
-    }
-  };
-
-  /** Terapkan perubahan dengan menyimpan snapshot untuk undo. */
-  const commit = useCallback((updater: (prev: CanvasDoc) => CanvasDoc) => {
-    setDoc((prev) => {
-      history.current = [...history.current.slice(-24), prev];
-      future.current = [];
-      setHistLen(history.current.length);
-      setFutLen(0);
-      return updater(prev);
-    });
-    setDirty(true);
-  }, []);
-
-  const undo = () => {
-    const previous = history.current.pop();
-    if (!previous) return;
-    setDoc((current) => {
-      future.current = [...future.current, current];
-      setHistLen(history.current.length);
-      setFutLen(future.current.length);
-      return previous;
-    });
-    setDirty(true);
-  };
-
-  const redo = () => {
-    const next = future.current.pop();
-    if (!next) return;
-    setDoc((current) => {
-      history.current = [...history.current, current];
-      setHistLen(history.current.length);
-      setFutLen(future.current.length);
-      return next;
-    });
-    setDirty(true);
-  };
-
-  // Pintasan keyboard: Ctrl+Z (undo), Ctrl+Y / Ctrl+Shift+Z (redo), Del (hapus layer)
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
-      else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); redo(); }
-      else if (e.key === 'Delete' || e.key === 'Backspace') { if (selected) { e.preventDefault(); removeLayer(); } }
-      else if ((e.ctrlKey || e.metaKey) && e.key === 'd') { e.preventDefault(); duplicateLayer(); }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  });
-  };
-
-  const activeLayer = useMemo(() => doc.layers.find((l) => l.id === selected), [doc, selected]);
-
-  const addLayer = (type: Layer['type']) => {
-    const id = `L${Date.now().toString(36)}`;
-    const base: Layer =
-      type === 'text'
-        ? { id, type, name: 'Teks baru', x: 64, y: 64, w: 320, h: 72, text: 'Judul baru', size: 32, weight: 600, color: '#0c1116' }
-        : type === 'button'
-          ? { id, type, name: 'Tombol baru', x: 64, y: 180, w: 180, h: 48, text: 'Klik', fill: '#0d9488', radius: 8 }
-          : { id, type, name: 'Bentuk baru', x: 64, y: 64, w: 240, h: 160, fill: '#e6f6f3', radius: 8 };
-    commit((prev) => ({ ...prev, layers: [...prev.layers, base] }));
-    setSelected(id);
-  };
-
-  const updateLayer = (patchData: Partial<Layer>) => {
-    if (!activeLayer) return;
-    commit((prev) => ({
-      ...prev,
-      layers: prev.layers.map((l) => (l.id === activeLayer.id ? { ...l, ...patchData } : l)),
-    }));
-  };
-
-  const removeLayer = () => {
-    if (!activeLayer) return;
-    commit((prev) => ({ ...prev, layers: prev.layers.filter((l) => l.id !== activeLayer.id) }));
-    setSelected('');
-  };
-
-  const duplicateLayer = () => {
-    if (!activeLayer) return;
-    const copy: Layer = { ...activeLayer, id: `L${Date.now().toString(36)}`, x: activeLayer.x + 24, y: activeLayer.y + 24, name: `${activeLayer.name} (salinan)` };
-    commit((prev) => ({ ...prev, layers: [...prev.layers, copy] }));
-    setSelected(copy.id);
-  };
-
-  // Drag layer di dalam frame; koordinat dihitung ulang sesuai skala zoom
-  const onPointerDown = (event: React.PointerEvent, layer: Layer) => {
-    event.stopPropagation();
-    setSelected(layer.id);
-    // Simpan snapshot sebelum drag dimulai agar bisa di-undo
-    dragRef.current = { id: layer.id, startX: event.clientX, startY: event.clientY, ox: layer.x, oy: layer.y, snapshotTaken: false };
-    (event.target as HTMLElement).setPointerCapture?.(event.pointerId);
-  };
-
-  const onPointerMove = (event: React.PointerEvent) => {
-    const drag = dragRef.current;
-    if (!drag) return;
-    // Ambil snapshot undo hanya sekali per operasi drag
-    if (!drag.snapshotTaken) {
-      setDoc((prev) => {
-        history.current = [...history.current.slice(-24), prev];
-        future.current = [];
-        setHistLen(history.current.length);
-        setFutLen(0);
-        return prev;
-      });
-      drag.snapshotTaken = true;
-    }
-    const dx = (event.clientX - drag.startX) / zoom;
-    const dy = (event.clientY - drag.startY) / zoom;
-    setDoc((prev) => ({
-      ...prev,
-      layers: prev.layers.map((l) =>
-        l.id === drag.id
-          ? { ...l, x: Math.round(clamp(drag.ox + dx, -l.w, prev.frame.width)), y: Math.round(clamp(drag.oy + dy, -l.h, prev.frame.height)) }
-          : l,
-      ),
-    }));
-    setDirty(true);
-  };
-
-  const onPointerUp = () => {
-    dragRef.current = null;
-  };
-
-  const save = async () => {
-    if (!activeId) return;
-    setSaving(true);
-    try {
-      await api(`/api/projects/${activeId}`, { method: 'PATCH', body: { data: doc } });
-      setDirty(false);
-      toast.success('Kanvas tersimpan', 'Isi frame tersimpan di server.');
-    } catch (err) {
-      toast.error('Gagal menyimpan kanvas', errorMessage(err));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const createProject = async () => {
-    const name = newName.trim();
-    if (name.length < 2) {
-      setNameError('Nama proyek minimal 2 karakter');
-      return;
-    }
-    try {
-      const res = await api<{ project: Project }>('/api/projects', {
-        method: 'POST',
-        body: { name, kind: 'canvas', data: { ...DEFAULT_DOC, frame: { ...DEFAULT_DOC.frame, label: name } } },
-      });
-      setProjects((prev) => [{ ...res.project, data: undefined } as unknown as ProjectMeta, ...prev]);
-      setActiveId(res.project.id);
-      setDoc(res.project.data);
-      setDirty(false);
-      setNameModal(false);
-      setNewName('');
-      setNameError('');
-      toast.success('Proyek dibuat', name);
-    } catch (err) {
-      setNameError(errorMessage(err));
-    }
-  };
-
-  if (error) return <LoadError message={error} onRetry={() => setReloadKey((k) => k + 1)} />;
+  const [activeTool, setActiveTool] = useState('select')
+  const [showNewModal, setShowNewModal] = useState(false)
+  const [activeProject, setActiveProject] = useState(1)
+  const [zoom, setZoom] = useState(100)
+  const [selectedLayer, setSelectedLayer] = useState(1)
+  const [showSidebar, setShowSidebar] = useState(true)
+  const [props, setProps] = useState({ x: 120, y: 80, w: 320, h: 180, color: '#0D9488' })
 
   return (
-    <>
-      <div className="page-head">
-        <div>
-          <span className="eyebrow">Praktik</span>
-          <h1 className="h2" style={{ marginTop: '.5rem' }}>Kanvas</h1>
-          <p className="small muted" style={{ marginTop: '.25rem' }}>
-            Susun layer, ubah properti, lalu simpan. Batas payload 512 KB per proyek.
-          </p>
+    <div className="flex flex-col h-[calc(100vh-7.5rem)] -m-6 -mt-0">
+      {/* Top toolbar */}
+      <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-ink-7">
+        <div className="flex items-center gap-1">
+          {tools.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setActiveTool(t.id)}
+              className={`group relative flex items-center justify-center w-9 h-9 rounded-lg transition-all ${
+                activeTool === t.id ? 'bg-teal-50 text-teal-600' : 'text-ink-4 hover:bg-ink-9 hover:text-ink-3'
+              }`}
+              title={t.label}
+            >
+              <t.icon className="w-[18px] h-[18px]" strokeWidth={activeTool === t.id ? 2.2 : 1.8} />
+              <div className="absolute -bottom-7 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-ink text-white text-[0.5625rem] font-semibold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                {t.label}
+              </div>
+            </button>
+          ))}
         </div>
-        <div className="row gap-2 wrapflex">
-          <button type="button" className="btn btn-sm" onClick={() => setNameModal(true)}>
-            <Plus size={14} /> Proyek baru
-          </button>
-          <button type="button" className="btn btn-teal btn-sm" onClick={save} disabled={saving || !activeId || !dirty}>
-            {saving ? <Spinner size={14} /> : <Save size={14} />} Simpan
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 bg-ink-9 rounded-lg px-1">
+            <button onClick={() => setZoom(Math.max(25, zoom - 25))} className="p-1.5 text-ink-4 hover:text-ink"><ZoomOut className="w-3.5 h-3.5" /></button>
+            <span className="text-xs font-medium text-ink-4 w-10 text-center">{zoom}%</span>
+            <button onClick={() => setZoom(Math.min(200, zoom + 25))} className="p-1.5 text-ink-4 hover:text-ink"><ZoomIn className="w-3.5 h-3.5" /></button>
+          </div>
+          <button className="flex items-center gap-1.5 px-4 py-2 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors">
+            <Save className="w-3.5 h-3.5" /> Simpan
           </button>
         </div>
       </div>
 
-      {loading ? (
-        <div className="canvas-shell" style={{ display: 'grid', placeItems: 'center' }}>
-          <SkeletonBlock height={20} width="40%" />
-        </div>
-      ) : projects.length === 0 ? (
-        <Empty
-          icon={<LayersIcon size={20} />}
-          title="Belum ada proyek kanvas"
-          text="Buat proyek pertama untuk mulai menyusun layer."
-          action={
-            <button type="button" className="btn btn-primary btn-sm" onClick={() => setNameModal(true)}>
-              <Plus size={14} /> Buat proyek
-            </button>
-          }
-        />
-      ) : (
-        <div className="canvas-shell">
-          <aside className="canvas-panel">
-            <div className="canvas-panel-head">
-              <span className="mono">Proyek</span>
-              <span className="mono">{projects.length}</span>
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left sidebar: Projects */}
+        <div className={`${showSidebar ? 'w-56' : 'w-0'} flex-shrink-0 bg-white border-r border-ink-7 overflow-hidden transition-all duration-300`}>
+          <div className="p-3">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-bold text-ink-5 uppercase tracking-wider">Proyek</h3>
+              <button onClick={() => setShowNewModal(true)} className="w-6 h-6 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center hover:bg-teal-100 transition-colors">
+                <Plus className="w-3.5 h-3.5" />
+              </button>
             </div>
-            <div className="canvas-panel-body">
-              {projects.map((project) => (
+            <div className="space-y-1">
+              {demoProjects.map((p) => (
                 <button
-                  key={project.id}
-                  type="button"
-                  className="layer-row"
-                  aria-current={project.id === activeId}
-                  onClick={() => openProject(project.id)}
+                  key={p.id}
+                  onClick={() => setActiveProject(p.id)}
+                  className={`w-full flex items-center gap-2.5 p-2.5 rounded-xl text-left transition-all ${
+                    activeProject === p.id ? 'bg-teal-50 border border-teal-200' : 'hover:bg-ink-9'
+                  }`}
                 >
-                  <LayersIcon size={13} />
-                  <span>{project.name}</span>
+                  <div className={`w-8 h-8 rounded-lg ${p.color} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
+                    {p.name[0]}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-semibold text-ink truncate">{p.name}</div>
+                    <div className="text-[0.5625rem] text-ink-5">{p.date}</div>
+                  </div>
                 </button>
               ))}
             </div>
-          </aside>
+          </div>
+        </div>
 
-          <section className="canvas-panel" style={{ minWidth: 0 }}>
-            <div className="canvas-panel-head">
-              <div className="tool-bar">
-                <button type="button" className="tool-btn" onClick={() => addLayer('rect')} aria-label="Tambah bentuk" title="Tambah bentuk">
-                  <Plus size={15} />
-                </button>
-                <button type="button" className="tool-btn" onClick={() => addLayer('text')} aria-label="Tambah teks" title="Tambah teks">
-                  <TypeIcon size={15} />
-                </button>
-                <button type="button" className="tool-btn" onClick={() => addLayer('button')} aria-label="Tambah tombol" title="Tambah tombol">
-                  <MousePointer2 size={15} />
-                </button>
-                <span style={{ width: 1, height: 18, background: 'var(--line)' }} />
-                <button type="button" className="tool-btn" onClick={undo} disabled={!histLen} aria-label="Undo (Ctrl+Z)">
-                  <Undo2 size={15} />
-                </button>
-                <button type="button" className="tool-btn" onClick={redo} disabled={!futLen} aria-label="Redo (Ctrl+Y)">
-                  <Redo2 size={15} />
-                </button>
+        {/* Canvas area */}
+        <div className="flex-1 relative bg-[#f8f9fb] overflow-hidden" style={{ backgroundImage: 'radial-gradient(circle, var(--color-ink-6) 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
+          <button
+            onClick={() => setShowSidebar(!showSidebar)}
+            className="absolute top-3 left-3 z-10 w-8 h-8 bg-white border border-ink-7 rounded-lg flex items-center justify-center text-ink-4 hover:text-ink shadow-sm"
+          >
+            <ChevronRight className={`w-4 h-4 transition-transform ${showSidebar ? 'rotate-180' : ''}`} />
+          </button>
+
+          {/* Demo elements on canvas */}
+          <div className="absolute inset-0 flex items-center justify-center" style={{ transform: `scale(${zoom / 100})` }}>
+            <div className="relative w-[480px] h-[320px] bg-white rounded-2xl shadow-xl border border-ink-7 overflow-hidden">
+              {/* Demo header */}
+              <div className="h-12 bg-ink flex items-center px-4 gap-2">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-red-400" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                  <div className="w-3 h-3 rounded-full bg-green-400" />
+                </div>
+                <div className="flex-1 mx-4">
+                  <div className="h-6 bg-ink-2 rounded-lg" />
+                </div>
               </div>
-              <div className="row gap-1">
-                <button type="button" className="tool-btn" onClick={() => setZoom((z) => clamp(+(z - 0.1).toFixed(2), 0.3, 1.5))} aria-label="Perkecil">
-                  <ZoomOut size={15} />
-                </button>
-                <span className="mono" style={{ minWidth: 40, textAlign: 'center' }}>{Math.round(zoom * 100)}%</span>
-                <button type="button" className="tool-btn" onClick={() => setZoom((z) => clamp(+(z + 0.1).toFixed(2), 0.3, 1.5))} aria-label="Perbesar">
-                  <ZoomIn size={15} />
-                </button>
+              {/* Demo content */}
+              <div className="p-6">
+                <div className="w-24 h-3 bg-teal-600 rounded mb-3" />
+                <div className="w-48 h-4 bg-ink-7 rounded mb-2" />
+                <div className="w-40 h-4 bg-ink-7 rounded mb-6" />
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="h-20 bg-teal-50 rounded-lg border border-teal-200" />
+                  <div className="h-20 bg-blue-50 rounded-lg border border-blue-200" />
+                  <div className="h-20 bg-purple-50 rounded-lg border border-purple-200" />
+                </div>
+                <div className="mt-4 flex gap-2">
+                  <div className="px-4 py-2 bg-teal-600 rounded-lg" />
+                  <div className="px-4 py-2 border border-ink-6 rounded-lg" />
+                </div>
+              </div>
+              {/* Selection handle */}
+              <div className="absolute top-11 left-5 right-5 bottom-5 border-2 border-teal-500 rounded-xl pointer-events-none">
+                <div className="absolute -top-1 -left-1 w-2.5 h-2.5 bg-white border-2 border-teal-500 rounded-sm" />
+                <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-white border-2 border-teal-500 rounded-sm" />
+                <div className="absolute -bottom-1 -left-1 w-2.5 h-2.5 bg-white border-2 border-teal-500 rounded-sm" />
+                <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 bg-white border-2 border-teal-500 rounded-sm" />
               </div>
             </div>
-            <div className="canvas-stage" ref={stageRef} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerLeave={onPointerUp}>
-              <div
-                className="canvas-frame"
-                style={{
-                  width: doc.frame.width,
-                  height: doc.frame.height,
-                  transform: `scale(${zoom})`,
-                }}
-                onClick={() => setSelected('')}
-              >
-                {doc.layers.map((layer) => (
-                  <div
-                    key={layer.id}
-                    className={`canvas-el${layer.id === selected ? ' selected' : ''}`}
-                    style={{
-                      left: layer.x,
-                      top: layer.y,
-                      width: layer.w,
-                      height: layer.h,
-                      background: layer.type === 'text' ? 'transparent' : layer.fill,
-                      borderRadius: layer.radius ?? 0,
-                      color: layer.color,
-                      fontSize: layer.size,
-                      fontWeight: layer.weight,
-                      display: layer.type === 'text' || layer.type === 'button' ? 'flex' : 'block',
-                      alignItems: layer.type === 'button' ? 'center' : 'flex-start',
-                      justifyContent: layer.type === 'button' ? 'center' : 'flex-start',
-                      padding: layer.type === 'text' ? 4 : 0,
-                      lineHeight: 1.1,
-                      overflow: 'hidden',
-                    }}
-                    onPointerDown={(event) => onPointerDown(event, layer)}
-                    role="presentation"
-                  >
-                    {layer.type === 'text' || layer.type === 'button' ? layer.text : null}
-                    {layer.id === selected ? <span className="handle" /> : null}
+          </div>
+        </div>
+
+        {/* Right panel: Layers + Properties */}
+        <div className="w-56 flex-shrink-0 bg-white border-l border-ink-7 overflow-y-auto hidden lg:block">
+          {/* Layers */}
+          <div className="p-3 border-b border-ink-7">
+            <h3 className="flex items-center gap-1.5 text-xs font-bold text-ink-5 uppercase tracking-wider mb-2">
+              <Layers className="w-3.5 h-3.5" /> Layers
+            </h3>
+            <div className="space-y-0.5">
+              {demoLayers.map((l) => (
+                <button
+                  key={l.id}
+                  onClick={() => setSelectedLayer(l.id)}
+                  className={`w-full flex items-center gap-2 p-2 rounded-lg text-left text-xs transition-all ${
+                    selectedLayer === l.id ? 'bg-teal-50 text-teal-700' : 'text-ink-4 hover:bg-ink-9'
+                  }`}
+                >
+                  <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${
+                    selectedLayer === l.id ? 'border-teal-600 bg-teal-100' : 'border-ink-6'
+                  }`}>
+                    {l.type === 'Text' && <Type className="w-2.5 h-2.5" />}
+                    {l.type === 'Frame' && <Square className="w-2.5 h-2.5" />}
+                    {l.type === 'Rectangle' && <div className="w-2 h-1.5 bg-current rounded-sm" />}
+                  </div>
+                  <span className="truncate font-medium">{l.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Properties */}
+          <div className="p-3">
+            <h3 className="text-xs font-bold text-ink-5 uppercase tracking-wider mb-3">Properti</h3>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { label: 'X', value: props.x, key: 'x' as const },
+                  { label: 'Y', value: props.y, key: 'y' as const },
+                  { label: 'W', value: props.w, key: 'w' as const },
+                  { label: 'H', value: props.h, key: 'h' as const },
+                ].map((p) => (
+                  <div key={p.label}>
+                    <label className="text-[0.5625rem] text-ink-5 font-medium">{p.label}</label>
+                    <input
+                      type="number"
+                      value={p.value}
+                      onChange={(e) => setProps({ ...props, [p.key]: Number(e.target.value) })}
+                      className="w-full mt-0.5 px-2 py-1.5 bg-ink-9 border border-ink-7 rounded-lg text-xs text-ink outline-none focus:border-teal-600 transition-colors"
+                    />
                   </div>
                 ))}
               </div>
+              <div>
+                <label className="text-[0.5625rem] text-ink-5 font-medium">Warna</label>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <input type="color" value={props.color} onChange={(e) => setProps({ ...props, color: e.target.value })} className="w-8 h-8 rounded-lg border border-ink-7 cursor-pointer" />
+                  <input
+                    type="text"
+                    value={props.color}
+                    onChange={(e) => setProps({ ...props, color: e.target.value })}
+                    className="flex-1 px-2 py-1.5 bg-ink-9 border border-ink-7 rounded-lg text-xs text-ink font-mono outline-none focus:border-teal-600 transition-colors"
+                  />
+                </div>
+              </div>
+              <button className="w-full flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-red-500 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
+                <Trash2 className="w-3 h-3" /> Hapus Layer
+              </button>
             </div>
-          </section>
+          </div>
+        </div>
+      </div>
 
-          <aside className="canvas-panel">
-            <div className="canvas-panel-head">
-              <span className="mono">Layer</span>
-              <div className="row gap-1">
-                <button type="button" className="tool-btn" onClick={duplicateLayer} disabled={!activeLayer} aria-label="Duplikat layer">
-                  <Copy size={14} />
-                </button>
-                <button type="button" className="tool-btn" onClick={removeLayer} disabled={!activeLayer} aria-label="Hapus layer">
-                  <Trash2 size={14} />
+      {/* New Project Modal */}
+      <AnimatePresence>
+        {showNewModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            onClick={() => setShowNewModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-lg font-bold text-ink">Proyek Baru</h2>
+                <button onClick={() => setShowNewModal(false)} className="w-8 h-8 rounded-lg hover:bg-ink-9 flex items-center justify-center text-ink-4">
+                  <X className="w-4 h-4" />
                 </button>
               </div>
-            </div>
-            <div className="canvas-panel-body">
-              {doc.layers.length === 0 ? (
-                <p className="small muted" style={{ padding: '.5rem' }}>Belum ada layer. Tambahkan bentuk atau teks.</p>
-              ) : (
-                [...doc.layers].reverse().map((layer) => (
-                  <button
-                    key={layer.id}
-                    type="button"
-                    className="layer-row"
-                    aria-current={layer.id === selected}
-                    onClick={() => setSelected(layer.id)}
-                  >
-                    {layer.type === 'text' ? <TypeIcon size={13} /> : <LayersIcon size={13} />}
-                    <span>{layer.name}</span>
-                  </button>
-                ))
-              )}
-
-              {activeLayer ? (
-                <>
-                  <div className="divider" />
-                  <span className="mono muted" style={{ fontSize: '.62rem', letterSpacing: '.1em' }}>Properti</span>
-                  <div className="field" style={{ marginTop: '.4rem' }}>
-                    <label className="label" htmlFor="layer-name">Nama</label>
-                    <input id="layer-name" className="input" value={activeLayer.name} onChange={(e) => updateLayer({ name: e.target.value })} />
-                  </div>
-                  <div className="prop-grid" style={{ marginTop: '.5rem' }}>
-                    <div className="field">
-                      <label className="label" htmlFor="lx">X</label>
-                      <input id="lx" className="input" type="number" value={activeLayer.x} onChange={(e) => updateLayer({ x: Number(e.target.value) })} />
-                    </div>
-                    <div className="field">
-                      <label className="label" htmlFor="ly">Y</label>
-                      <input id="ly" className="input" type="number" value={activeLayer.y} onChange={(e) => updateLayer({ y: Number(e.target.value) })} />
-                    </div>
-                    <div className="field">
-                      <label className="label" htmlFor="lw">Lebar</label>
-                      <input id="lw" className="input" type="number" min={8} value={activeLayer.w} onChange={(e) => updateLayer({ w: Math.max(8, Number(e.target.value)) })} />
-                    </div>
-                    <div className="field">
-                      <label className="label" htmlFor="lh">Tinggi</label>
-                      <input id="lh" className="input" type="number" min={8} value={activeLayer.h} onChange={(e) => updateLayer({ h: Math.max(8, Number(e.target.value)) })} />
-                    </div>
-                  </div>
-
-                  {activeLayer.type !== 'text' ? (
-                    <div className="field" style={{ marginTop: '.5rem' }}>
-                      <label className="label" htmlFor="lfill">Warna isi</label>
-                      <div className="color-row">
-                        <input id="lfill" type="color" value={activeLayer.fill ?? '#0d9488'} onChange={(e) => updateLayer({ fill: e.target.value })} />
-                        <input className="input" value={activeLayer.fill ?? ''} onChange={(e) => updateLayer({ fill: e.target.value })} aria-label="Kode warna isi" />
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {activeLayer.type === 'text' || activeLayer.type === 'button' ? (
-                    <>
-                      <div className="field" style={{ marginTop: '.5rem' }}>
-                        <label className="label" htmlFor="ltext">Teks</label>
-                        <textarea id="ltext" className="textarea" style={{ minHeight: 60 }} value={activeLayer.text ?? ''} onChange={(e) => updateLayer({ text: e.target.value })} />
-                      </div>
-                      <div className="prop-grid" style={{ marginTop: '.5rem' }}>
-                        <div className="field">
-                          <label className="label" htmlFor="lsize">Ukuran</label>
-                          <input id="lsize" className="input" type="number" value={activeLayer.size ?? 16} onChange={(e) => updateLayer({ size: Number(e.target.value) })} />
-                        </div>
-                        <div className="field">
-                          <label className="label" htmlFor="lweight">Bobot</label>
-                          <select id="lweight" className="select" value={activeLayer.weight ?? 400} onChange={(e) => updateLayer({ weight: Number(e.target.value) })}>
-                            <option value={400}>Regular</option>
-                            <option value={500}>Medium</option>
-                            <option value={600}>Semibold</option>
-                            <option value={700}>Bold</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div className="field" style={{ marginTop: '.5rem' }}>
-                        <label className="label" htmlFor="lcolor">Warna teks</label>
-                        <div className="color-row">
-                          <input id="lcolor" type="color" value={activeLayer.color ?? '#0c1116'} onChange={(e) => updateLayer({ color: e.target.value })} />
-                          <input className="input" value={activeLayer.color ?? ''} onChange={(e) => updateLayer({ color: e.target.value })} aria-label="Kode warna teks" />
-                        </div>
-                      </div>
-                    </>
-                  ) : null}
-
-                  <div className="field" style={{ marginTop: '.5rem' }}>
-                    <label className="label" htmlFor="lradius">Radius</label>
-                    <input id="lradius" className="input" type="number" min={0} value={activeLayer.radius ?? 0} onChange={(e) => updateLayer({ radius: Math.max(0, Number(e.target.value)) })} />
-                  </div>
-
-                  <span className="mono muted" style={{ fontSize: '.62rem', letterSpacing: '.1em', display: 'block', marginTop: '.8rem' }}>Palet</span>
-                  <div className="row gap-1 wrapflex" style={{ marginTop: '.35rem' }}>
-                    {PALETTE.map((color) => (
-                      <button
-                        key={color}
-                        type="button"
-                        aria-label={`Pakai warna ${color}`}
-                        onClick={() => updateLayer(activeLayer.type === 'text' ? { color } : { fill: color })}
-                        style={{ width: 22, height: 22, borderRadius: 5, background: color, border: '1px solid var(--line-strong)' }}
-                      />
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-ink mb-1 block">Nama Proyek</label>
+                  <input type="text" placeholder="Contoh: Wireframe Homepage" className="w-full px-3 py-2.5 bg-ink-9 border border-ink-7 rounded-xl text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 transition-all" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-ink mb-2 block">Template</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['Kosong', 'Wireframe', 'Mobile App'].map((t, i) => (
+                      <button key={t} className={`p-3 border rounded-xl text-xs font-medium text-center transition-all ${i === 0 ? 'border-teal-600 bg-teal-50 text-teal-700' : 'border-ink-7 text-ink-4 hover:border-ink-6'}`}>
+                        <div className={`w-full h-12 mb-2 rounded-lg ${i === 0 ? 'bg-teal-100' : 'bg-ink-8'}`} />
+                        {t}
+                      </button>
                     ))}
                   </div>
-                </>
-              ) : (
-                <p className="small muted" style={{ padding: '.6rem .5rem' }}>
-                  Pilih layer untuk mengubah propertinya.
-                </p>
-              )}
-            </div>
-          </aside>
-        </div>
-      )}
-
-      <Modal open={nameModal} onClose={() => setNameModal(false)} title="Proyek kanvas baru">
-        <div className="field">
-          <label className="label" htmlFor="pname">Nama proyek</label>
-          <input
-            id="pname"
-            className="input"
-            value={newName}
-            maxLength={80}
-            placeholder="Mis. Hero landing v2"
-            aria-invalid={Boolean(nameError)}
-            onChange={(e) => { setNewName(e.target.value); setNameError(''); }}
-          />
-          {nameError ? <span className="field-error">{nameError}</span> : <span className="help">2–80 karakter.</span>}
-        </div>
-        <div className="row gap-2" style={{ marginTop: '1rem', justifyContent: 'flex-end' }}>
-          <button type="button" className="btn btn-ghost" onClick={() => setNameModal(false)}>Batal</button>
-          <button type="button" className="btn btn-teal" onClick={createProject}>
-            <Check size={15} /> Buat
-          </button>
-        </div>
-      </Modal>
-    </>
-  );
+                </div>
+                <button onClick={() => setShowNewModal(false)} className="w-full py-3 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors">
+                  Buat Proyek
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
 }

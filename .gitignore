@@ -8,6 +8,7 @@ dist/
 build/
 out/
 .next/
+*.tsbuildinfo
 
 # Environment
 .env
@@ -30,5 +31,21 @@ desktop.ini
 *.log
 npm-debug.log*
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+venv/
+.venv/
+
+# Database & secrets
+*.db
+*.key
+
+# Uploads
+app/server/data/uploads/
+
 # Misc
 .cache/
+*.png.bak
