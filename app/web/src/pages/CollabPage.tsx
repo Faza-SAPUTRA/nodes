@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronLeft, Monitor, Tablet, Smartphone,
   MessageSquare, ThumbsUp, UserPlus,
-  Send, X,
+  Send, X, MapPin, Check, Reply, Trash2,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useToast } from '../components/ui/Toast'
@@ -30,8 +30,8 @@ interface CommentPin {
   letter: string
   time: string
   text: string
-  reply?: { author: string; avatarBg: string; letter: string; time: string; text: string }
-  resolved?: boolean
+  replies: { author: string; avatarBg: string; letter: string; time: string; text: string }[]
+  resolved: boolean
 }
 
 interface ActivityItem {
@@ -59,17 +59,18 @@ const initialChat: ChatMessage[] = [
   { id: '5', author: 'Kamu', avatar: 'AP', avatarBg: '#0D9488', text: 'Iya gua ganti ke teal gradient. Bentar ya.', time: '1 min', self: true },
 ]
 
-const pins: CommentPin[] = [
+const initialPins: CommentPin[] = [
   {
     id: 1, x: '75%', y: '18%', author: 'Budi', avatarBg: '#7C3AED', letter: 'B', time: '2 min lalu',
     text: 'CTA button "Get Started" kurang kontras sama background navbar. Coba pake warna yang lebih bold.',
-    reply: { author: 'Kamu', avatarBg: '#0D9488', letter: 'AP', time: '1 min lalu', text: 'Setuju, ganti ke teal gradient aja ya?' },
+    replies: [{ author: 'Kamu', avatarBg: '#0D9488', letter: 'AP', time: '1 min lalu', text: 'Setuju, ganti ke teal gradient aja ya?' }],
+    resolved: false,
   },
-  { id: 2, x: '35%', y: '42%', author: 'Sari', avatarBg: '#EC4899', letter: 'S', time: '5 min lalu', text: 'Headline font size terlalu besar di mobile. Kurangin ke 2.5rem buat responsive.' },
-  { id: 3, x: '50%', y: '85%', author: 'Kamu', avatarBg: '#0D9488', letter: 'AP', time: '8 min lalu', text: 'Feature cards spacing udah di-fix. Gap sekarang 24px.', resolved: true },
+  { id: 2, x: '35%', y: '42%', author: 'Sari', avatarBg: '#EC4899', letter: 'S', time: '5 min lalu', text: 'Headline font size terlalu besar di mobile. Kurangin ke 2.5rem buat responsive.', replies: [], resolved: false },
+  { id: 3, x: '50%', y: '85%', author: 'Kamu', avatarBg: '#0D9488', letter: 'AP', time: '8 min lalu', text: 'Feature cards spacing udah di-fix. Gap sekarang 24px.', replies: [], resolved: true },
 ]
 
-const activityItems: ActivityItem[] = [
+const initialActivity: ActivityItem[] = [
   { id: 1, author: 'Kamu', avatarBg: '#0D9488', letter: 'AP', text: 'resolved komentar #3', time: '8 min lalu' },
   { id: 2, author: 'Sari', avatarBg: '#EC4899', letter: 'S', text: 'menambahkan pin #2', time: '5 min lalu' },
   { id: 3, author: 'Budi', avatarBg: '#7C3AED', letter: 'B', text: 'menambahkan pin #1', time: '2 min lalu' },
@@ -91,6 +92,9 @@ function escapeHtml(str: string) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
+let nextPinId = 10
+let nextActivityId = 100
+
 /* ─── Component ─── */
 export default function CollabPage() {
   const [device, setDevice] = useState<DeviceMode>('desktop')
@@ -103,14 +107,43 @@ export default function CollabPage() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [copied, setCopied] = useState(false)
   const [showPanel, setShowPanel] = useState(true)
+
+  // Interactive pins
+  const [commentPins, setCommentPins] = useState<CommentPin[]>(initialPins)
+  const [isAddingPin, setIsAddingPin] = useState(false)
+  const [newPinText, setNewPinText] = useState('')
+  const [pendingPinPos, setPendingPinPos] = useState<{ x: string; y: string } | null>(null)
+
+  // Reply to pin
+  const [replyingToPinId, setReplyingToPinId] = useState<number | null>(null)
+  const [pinReplyText, setPinReplyText] = useState('')
+
+  // Activity feed
+  const [activity, setActivity] = useState<ActivityItem[]>(initialActivity)
+
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const previewRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
-  const { success, info } = useToast()
+  const { success, info, warning } = useToast()
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chat])
 
+  /* ─── Add activity ─── */
+  function addActivity(text: string) {
+    const item: ActivityItem = {
+      id: nextActivityId++,
+      author: 'Kamu',
+      avatarBg: '#0D9488',
+      letter: 'AP',
+      text,
+      time: 'baru saja',
+    }
+    setActivity(prev => [item, ...prev])
+  }
+
+  /* ─── Chat ─── */
   function sendMessage() {
     const text = input.trim()
     if (!text) return
@@ -121,6 +154,7 @@ export default function CollabPage() {
     }
     setChat(prev => [...prev, newMsg])
     setInput('')
+    addActivity('mengirim pesan di chat')
 
     // Simulate reply
     setTimeout(() => {
@@ -132,6 +166,106 @@ export default function CollabPage() {
         text: replyText, time: 'baru saja',
       }])
     }, 1500 + Math.random() * 2000)
+  }
+
+  /* ─── Pin: click on preview to add ─── */
+  function handlePreviewClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (!isAddingPin) return
+    if (!previewRef.current) return
+    const rect = previewRef.current.getBoundingClientRect()
+    const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(1) + '%'
+    const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(1) + '%'
+    setPendingPinPos({ x, y })
+  }
+
+  function confirmAddPin() {
+    if (!pendingPinPos || !newPinText.trim()) {
+      warning('Komentar Kosong', 'Tulis komentar sebelum menambahkan pin.')
+      return
+    }
+    const newPin: CommentPin = {
+      id: nextPinId++,
+      x: pendingPinPos.x,
+      y: pendingPinPos.y,
+      author: 'Kamu',
+      avatarBg: '#0D9488',
+      letter: 'AP',
+      time: 'baru saja',
+      text: newPinText.trim(),
+      replies: [],
+      resolved: false,
+    }
+    setCommentPins(prev => [...prev, newPin])
+    addActivity(`menambahkan pin #${newPin.id}`)
+    success('Pin Ditambahkan! 📌', `Komentar berhasil ditambahkan di preview.`)
+    setPendingPinPos(null)
+    setNewPinText('')
+    setIsAddingPin(false)
+    setActivePin(newPin.id)
+  }
+
+  function cancelAddPin() {
+    setPendingPinPos(null)
+    setNewPinText('')
+    setIsAddingPin(false)
+  }
+
+  /* ─── Pin: resolve/unresolve ─── */
+  function toggleResolvePin(pinId: number) {
+    setCommentPins(prev => prev.map(p => {
+      if (p.id !== pinId) return p
+      const newResolved = !p.resolved
+      addActivity(newResolved ? `resolved komentar #${p.id}` : `unresolve komentar #${p.id}`)
+      return { ...p, resolved: newResolved }
+    }))
+  }
+
+  /* ─── Pin: delete ─── */
+  function deletePin(pinId: number) {
+    setCommentPins(prev => prev.filter(p => p.id !== pinId))
+    setActivePin(null)
+    addActivity(`menghapus pin #${pinId}`)
+    info('Pin Dihapus', `Pin #${pinId} berhasil dihapus.`)
+  }
+
+  /* ─── Pin: reply ─── */
+  function submitPinReply(pinId: number) {
+    if (!pinReplyText.trim()) return
+    setCommentPins(prev => prev.map(p => {
+      if (p.id !== pinId) return p
+      return {
+        ...p,
+        replies: [...p.replies, {
+          author: 'Kamu',
+          avatarBg: '#0D9488',
+          letter: 'AP',
+          time: 'baru saja',
+          text: pinReplyText.trim(),
+        }],
+      }
+    }))
+    addActivity(`membalas komentar #${pinId}`)
+    setPinReplyText('')
+    setReplyingToPinId(null)
+
+    // Simulate bot reply to pin
+    setTimeout(() => {
+      const replier = replyPool[Math.floor(Math.random() * replyPool.length)]
+      const replyText = replier.texts[Math.floor(Math.random() * replier.texts.length)]
+      setCommentPins(prev => prev.map(p => {
+        if (p.id !== pinId) return p
+        return {
+          ...p,
+          replies: [...p.replies, {
+            author: replier.name,
+            avatarBg: replier.av,
+            letter: replier.letter,
+            time: 'baru saja',
+            text: replyText,
+          }],
+        }
+      }))
+    }, 2000 + Math.random() * 1500)
   }
 
   function handleCopy() {
@@ -151,12 +285,20 @@ export default function CollabPage() {
   }
 
   function handleSendInvite() {
-    if (!inviteEmail.trim()) return
+    if (!inviteEmail.trim()) {
+      warning('Email Kosong', 'Masukkan alamat email terlebih dahulu.')
+      return
+    }
+    if (!inviteEmail.includes('@')) {
+      warning('Email Tidak Valid', 'Masukkan alamat email yang valid.')
+      return
+    }
     success('Undangan Terkirim! 📩', `Undangan berhasil dikirim ke ${inviteEmail}`)
+    addActivity(`mengundang ${inviteEmail}`)
     setInviteEmail('')
   }
 
-  const commentCount = pins.length
+  const unresolvedCount = commentPins.filter(p => !p.resolved).length
   const deviceWidth = device === 'desktop' ? 'max-w-[900px]' : device === 'tablet' ? 'max-w-[600px]' : 'max-w-[375px]'
 
   return (
@@ -184,7 +326,7 @@ export default function CollabPage() {
               <span className="text-ink-5 hidden sm:inline">·</span>
               <span className="hidden sm:inline">Dimulai 12 menit lalu</span>
               <span className="text-ink-5 hidden sm:inline">·</span>
-              <span className="hidden sm:inline">3 peserta</span>
+              <span className="hidden sm:inline">{participants.length} peserta</span>
             </div>
           </div>
         </div>
@@ -254,6 +396,25 @@ export default function CollabPage() {
               })}
             </div>
             <div className="flex items-center gap-1">
+              {/* Add pin mode toggle */}
+              <button
+                onClick={() => {
+                  if (isAddingPin) {
+                    cancelAddPin()
+                  } else {
+                    setIsAddingPin(true)
+                    info('Mode Pin Aktif', 'Klik di preview untuk menambahkan pin komentar.')
+                  }
+                }}
+                className={clsx(
+                  'flex items-center gap-1 px-2 py-1.5 rounded-md text-[11px] font-medium transition-colors',
+                  isAddingPin ? 'bg-purple-100 text-purple-700 ring-1 ring-purple-300' : 'text-ink-4 hover:bg-ink-8 hover:text-ink'
+                )}
+                title="Tambah pin komentar"
+              >
+                <MapPin size={14} />
+                <span className="hidden sm:inline">{isAddingPin ? 'Batal Pin' : 'Tambah Pin'}</span>
+              </button>
               <button
                 onClick={() => setShowComments(!showComments)}
                 className={clsx(
@@ -263,7 +424,9 @@ export default function CollabPage() {
                 title="Toggle komentar"
               >
                 <MessageSquare size={14} />
-                <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-teal-600 text-white text-[8px] font-bold flex items-center justify-center">{commentCount}</span>
+                {unresolvedCount > 0 && (
+                  <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-teal-600 text-white text-[8px] font-bold flex items-center justify-center">{unresolvedCount}</span>
+                )}
               </button>
               <button
                 className="w-[30px] h-[30px] rounded-md flex items-center justify-center text-ink-4 hover:bg-ink-8 hover:text-ink transition-colors"
@@ -277,9 +440,22 @@ export default function CollabPage() {
 
           {/* Design Viewport */}
           <div className="flex-1 overflow-auto bg-ink-8 flex items-start justify-center p-4 sm:p-8 relative">
+            {/* Adding pin indicator */}
+            {isAddingPin && (
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30 px-3 py-1.5 bg-purple-600 text-white text-xs font-semibold rounded-lg shadow-lg animate-pulse">
+                📌 Klik di design preview untuk menaruh pin
+              </div>
+            )}
+
             <motion.div
-              className={clsx('w-full bg-white rounded-lg shadow-[0_4px_24px_rgba(0,0,0,.06),0_0_0_1px_rgba(0,0,0,.04)] overflow-hidden relative transition-all duration-400', deviceWidth)}
+              ref={previewRef}
+              className={clsx(
+                'w-full bg-white rounded-lg shadow-[0_4px_24px_rgba(0,0,0,.06),0_0_0_1px_rgba(0,0,0,.04)] overflow-hidden relative transition-all duration-400',
+                deviceWidth,
+                isAddingPin && 'ring-2 ring-purple-400 ring-offset-2 cursor-crosshair'
+              )}
               layout
+              onClick={handlePreviewClick}
             >
               {/* Simulated Landing Page */}
               <div className="flex items-center justify-between px-4 sm:px-8 py-3 border-b border-ink-7">
@@ -312,9 +488,21 @@ export default function CollabPage() {
                 ))}
               </div>
 
+              {/* Pending pin position marker */}
+              {pendingPinPos && (
+                <div
+                  className="absolute z-20"
+                  style={{ top: pendingPinPos.y, left: pendingPinPos.x }}
+                >
+                  <div className="w-6 h-6 rounded-full bg-purple-600 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-lg animate-bounce">
+                    ?
+                  </div>
+                </div>
+              )}
+
               {/* Comment Pins */}
               <AnimatePresence>
-                {showComments && pins.map(pin => (
+                {showComments && commentPins.map(pin => (
                   <motion.div
                     key={pin.id}
                     initial={{ opacity: 0, scale: 0 }}
@@ -338,28 +526,84 @@ export default function CollabPage() {
                           initial={{ opacity: 0, y: 4 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 4 }}
-                          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[260px] p-3 bg-white rounded-xl shadow-[0_8px_30px_rgba(0,0,0,.12)] z-20"
+                          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[280px] bg-white rounded-xl shadow-[0_8px_30px_rgba(0,0,0,.12)] z-20"
                           onClick={e => e.stopPropagation()}
                         >
-                          <div className="flex items-center gap-1.5 mb-1.5">
-                            <span className="w-[18px] h-[18px] rounded-[5px] flex items-center justify-center text-white text-[8px] font-bold shrink-0" style={{ background: pin.avatarBg }}>{pin.letter}</span>
-                            <strong className="text-[11px]">{pin.author}</strong>
-                            <time className="text-[9px] text-ink-4 ml-auto">{pin.time}</time>
-                          </div>
-                          <p className="text-[11px] leading-relaxed text-ink-4">{pin.text}</p>
-                          {pin.reply && (
-                            <div className="mt-2 pt-2 border-t border-ink-7">
-                              <div className="flex items-center gap-1.5 mb-1">
-                                <span className="w-[18px] h-[18px] rounded-[5px] flex items-center justify-center text-white text-[8px] font-bold shrink-0" style={{ background: pin.reply.avatarBg }}>{pin.reply.letter}</span>
-                                <strong className="text-[11px]">{pin.reply.author}</strong>
-                                <time className="text-[9px] text-ink-4 ml-auto">{pin.reply.time}</time>
-                              </div>
-                              <p className="text-[11px] leading-relaxed text-ink-4">{pin.reply.text}</p>
+                          <div className="p-3">
+                            {/* Pin header */}
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <span className="w-[18px] h-[18px] rounded-[5px] flex items-center justify-center text-white text-[8px] font-bold shrink-0" style={{ background: pin.avatarBg }}>{pin.letter}</span>
+                              <strong className="text-[11px]">{pin.author}</strong>
+                              <time className="text-[9px] text-ink-4 ml-auto">{pin.time}</time>
                             </div>
-                          )}
-                          {pin.resolved && (
-                            <div className="mt-1.5 inline-block px-2 py-0.5 rounded text-[9px] font-semibold bg-green-500/[.08] text-green-500">✓ Resolved</div>
-                          )}
+                            <p className="text-[11px] leading-relaxed text-ink-4">{pin.text}</p>
+
+                            {/* Replies */}
+                            {pin.replies.length > 0 && (
+                              <div className="mt-2 pt-2 border-t border-ink-7 space-y-2">
+                                {pin.replies.map((r, i) => (
+                                  <div key={i}>
+                                    <div className="flex items-center gap-1.5 mb-0.5">
+                                      <span className="w-[16px] h-[16px] rounded-[4px] flex items-center justify-center text-white text-[7px] font-bold shrink-0" style={{ background: r.avatarBg }}>{r.letter}</span>
+                                      <strong className="text-[10px]">{r.author}</strong>
+                                      <time className="text-[8px] text-ink-4 ml-auto">{r.time}</time>
+                                    </div>
+                                    <p className="text-[10px] leading-relaxed text-ink-4 ml-5">{r.text}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Reply input */}
+                            {replyingToPinId === pin.id ? (
+                              <div className="mt-2 pt-2 border-t border-ink-7">
+                                <div className="flex gap-1">
+                                  <input
+                                    autoFocus
+                                    value={pinReplyText}
+                                    onChange={e => setPinReplyText(e.target.value)}
+                                    onKeyDown={e => { if (e.key === 'Enter') submitPinReply(pin.id); if (e.key === 'Escape') { setReplyingToPinId(null); setPinReplyText('') } }}
+                                    placeholder="Tulis balasan..."
+                                    className="flex-1 px-2 py-1 border border-ink-7 rounded-md text-[10px] outline-none focus:border-teal-600"
+                                  />
+                                  <button
+                                    onClick={() => submitPinReply(pin.id)}
+                                    className="w-6 h-6 rounded-md bg-teal-600 text-white flex items-center justify-center hover:bg-teal-700"
+                                  >
+                                    <Send size={10} />
+                                  </button>
+                                </div>
+                              </div>
+                            ) : null}
+
+                            {/* Pin actions */}
+                            <div className="flex items-center gap-1 mt-2 pt-2 border-t border-ink-7">
+                              <button
+                                onClick={() => toggleResolvePin(pin.id)}
+                                className={clsx(
+                                  'flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-semibold transition-colors',
+                                  pin.resolved
+                                    ? 'bg-green-500/[.08] text-green-600 hover:bg-green-500/15'
+                                    : 'bg-ink-9 text-ink-4 hover:bg-ink-8 hover:text-ink'
+                                )}
+                              >
+                                <Check size={10} /> {pin.resolved ? 'Resolved' : 'Resolve'}
+                              </button>
+                              <button
+                                onClick={() => { setReplyingToPinId(replyingToPinId === pin.id ? null : pin.id); setPinReplyText('') }}
+                                className="flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-semibold bg-ink-9 text-ink-4 hover:bg-ink-8 hover:text-ink transition-colors"
+                              >
+                                <Reply size={10} /> Balas
+                              </button>
+                              <button
+                                onClick={() => deletePin(pin.id)}
+                                className="flex items-center gap-1 px-2 py-1 rounded-md text-[9px] font-semibold text-red-500 hover:bg-red-50 transition-colors ml-auto"
+                              >
+                                <Trash2 size={10} />
+                              </button>
+                            </div>
+                          </div>
+
                           {/* Arrow */}
                           <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-[6px] border-x-transparent border-t-[6px] border-t-white" />
                         </motion.div>
@@ -370,6 +614,34 @@ export default function CollabPage() {
               </AnimatePresence>
             </motion.div>
           </div>
+
+          {/* Pending pin input bar */}
+          <AnimatePresence>
+            {pendingPinPos && (
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 20, opacity: 0 }}
+                className="shrink-0 px-4 py-2.5 bg-white border-t border-purple-200 flex gap-2 items-center"
+              >
+                <MapPin size={14} className="text-purple-600 shrink-0" />
+                <input
+                  autoFocus
+                  value={newPinText}
+                  onChange={e => setNewPinText(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') confirmAddPin(); if (e.key === 'Escape') cancelAddPin() }}
+                  placeholder="Tulis komentar untuk pin ini..."
+                  className="flex-1 px-3 py-1.5 border border-ink-7 rounded-lg text-xs outline-none focus:border-purple-500 transition-colors"
+                />
+                <button onClick={confirmAddPin} className="px-3 py-1.5 bg-purple-600 text-white text-xs font-semibold rounded-lg hover:bg-purple-700 transition-colors">
+                  Pin
+                </button>
+                <button onClick={cancelAddPin} className="px-2 py-1.5 text-xs text-ink-4 hover:text-ink transition-colors">
+                  Batal
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* ─── Collab Panel ─── */}
@@ -398,6 +670,9 @@ export default function CollabPage() {
                     )}
                   >
                     {t.label}
+                    {t.key === 'activity' && activity.length > 0 && (
+                      <span className="ml-1 text-[8px] bg-ink-8 px-1 py-0.5 rounded-full">{activity.length}</span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -450,7 +725,22 @@ export default function CollabPage() {
                       </button>
                     </div>
                     <div className="flex gap-1 mt-1.5">
-                      <button className="text-[9px] px-2 py-0.5 rounded text-ink-4 hover:bg-ink-8 hover:text-ink transition-colors">📌 Pin</button>
+                      <button
+                        onClick={() => {
+                          if (isAddingPin) {
+                            cancelAddPin()
+                          } else {
+                            setIsAddingPin(true)
+                            info('Mode Pin Aktif', 'Klik di preview untuk menambahkan pin.')
+                          }
+                        }}
+                        className={clsx(
+                          'text-[9px] px-2 py-0.5 rounded transition-colors',
+                          isAddingPin ? 'bg-purple-100 text-purple-700' : 'text-ink-4 hover:bg-ink-8 hover:text-ink'
+                        )}
+                      >
+                        📌 Pin
+                      </button>
                       <button className="text-[9px] px-2 py-0.5 rounded text-ink-4 hover:bg-ink-8 hover:text-ink transition-colors">📎 File</button>
                       <button className="text-[9px] px-2 py-0.5 rounded text-ink-4 hover:bg-ink-8 hover:text-ink transition-colors">😊</button>
                     </div>
@@ -461,21 +751,27 @@ export default function CollabPage() {
               {/* Activity Panel */}
               {panelTab === 'activity' && (
                 <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2.5">
-                  {activityItems.map(item => (
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: item.id * 0.05 }}
-                      className="flex gap-2 items-start"
-                    >
-                      <span className="w-[22px] h-[22px] rounded-md flex items-center justify-center text-white text-[8px] font-bold shrink-0" style={{ background: item.avatarBg }}>{item.letter}</span>
-                      <div className="min-w-0">
-                        <p className="text-[11px]"><strong>{item.author}</strong> {item.text}</p>
-                        <time className="text-[9px] text-ink-4 mt-0.5 block">{item.time}</time>
-                      </div>
-                    </motion.div>
-                  ))}
+                  {activity.length === 0 ? (
+                    <div className="flex-1 flex items-center justify-center text-center text-xs text-ink-4 p-4">
+                      Belum ada aktivitas.
+                    </div>
+                  ) : (
+                    activity.map((item, index) => (
+                      <motion.div
+                        key={item.id}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.03 }}
+                        className="flex gap-2 items-start"
+                      >
+                        <span className="w-[22px] h-[22px] rounded-md flex items-center justify-center text-white text-[8px] font-bold shrink-0" style={{ background: item.avatarBg }}>{item.letter}</span>
+                        <div className="min-w-0">
+                          <p className="text-[11px]"><strong>{item.author}</strong> {item.text}</p>
+                          <time className="text-[9px] text-ink-4 mt-0.5 block">{item.time}</time>
+                        </div>
+                      </motion.div>
+                    ))
+                  )}
                 </div>
               )}
 
@@ -490,6 +786,7 @@ export default function CollabPage() {
                       initialVotes={2}
                       total={3}
                       voters={[{ letter: 'B', bg: '#7C3AED' }, { letter: 'AP', bg: '#0D9488' }]}
+                      onVote={(voted) => addActivity(voted ? 'vote untuk Versi A — Dark' : 'membatalkan vote Versi A')}
                     />
                     <VoteCard
                       label="Versi B — Light"
@@ -498,6 +795,7 @@ export default function CollabPage() {
                       initialVotes={1}
                       total={3}
                       voters={[{ letter: 'S', bg: '#EC4899' }]}
+                      onVote={(voted) => addActivity(voted ? 'vote untuk Versi B — Light' : 'membatalkan vote Versi B')}
                     />
                   </div>
                 </div>
@@ -572,13 +870,14 @@ export default function CollabPage() {
 }
 
 /* ─── Vote Card ─── */
-function VoteCard({ label, labelColor, gradient, initialVotes, total, voters }: {
+function VoteCard({ label, labelColor, gradient, initialVotes, total, voters, onVote }: {
   label: string
   labelColor?: string
   gradient: string
   initialVotes: number
   total: number
   voters: { letter: string; bg: string }[]
+  onVote?: (voted: boolean) => void
 }) {
   const [voted, setVoted] = useState(false)
   const [votes, setVotes] = useState(initialVotes)
@@ -588,9 +887,11 @@ function VoteCard({ label, labelColor, gradient, initialVotes, total, voters }: 
     if (voted) {
       setVoted(false)
       setVotes(initialVotes)
+      onVote?.(false)
     } else {
       setVoted(true)
       setVotes(initialVotes + 1)
+      onVote?.(true)
     }
   }
 
