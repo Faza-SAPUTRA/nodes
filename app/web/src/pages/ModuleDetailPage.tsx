@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, Check, BookOpen, Clock, Award, ChevronDown, Save, Lightbulb } from 'lucide-react'
+import { ChevronRight, Check, BookOpen, Clock, Award, ChevronDown, Save, Lightbulb, Lock } from 'lucide-react'
 import { modulesData } from '../data/modules'
 import { useToast } from '../components/ui/Toast'
 
@@ -174,7 +174,7 @@ const defaultSubBabs = [
 
 export default function ModuleDetailPage() {
   const { slug } = useParams()
-  const { success } = useToast()
+  const { success, warning } = useToast()
 
   // Find module from data
   const moduleData = useMemo(() => {
@@ -232,6 +232,10 @@ export default function ModuleDetailPage() {
   }
 
   const handleMarkDone = () => {
+    if (isSubLocked(activeSub)) {
+      warning('Sub-bab Terkunci', 'Selesaikan sub-bab sebelumnya terlebih dahulu.')
+      return
+    }
     setSubBabs((prev: typeof defaultSubBabs) =>
       prev.map((s) => s.id === activeSub ? { ...s, done: !s.done } : s)
     )
@@ -248,6 +252,15 @@ export default function ModuleDetailPage() {
 
   const activeSubData = subBabs.find((s: typeof defaultSubBabs[0]) => s.id === activeSub)
   const activeContent = activeSubData ? subBabContent[activeSubData.title] : null
+
+  // A sub-bab is locked if any previous sub-bab is not done
+  function isSubLocked(subId: number): boolean {
+    const idx = subBabs.findIndex((s: typeof defaultSubBabs[0]) => s.id === subId)
+    if (idx <= 0) return false // first sub-bab is never locked
+    return subBabs.slice(0, idx).some((s: typeof defaultSubBabs[0]) => !s.done)
+  }
+
+  const activeIsLocked = isSubLocked(activeSub)
 
   return (
     <div className="space-y-4">
@@ -304,21 +317,35 @@ export default function ModuleDetailPage() {
                 className="overflow-hidden"
               >
                 <div className="space-y-1">
-                  {subBabs.map((sub: typeof defaultSubBabs[0]) => (
+                  {subBabs.map((sub: typeof defaultSubBabs[0]) => {
+                    const locked = isSubLocked(sub.id)
+                    return (
                     <button
                       key={sub.id}
-                      onClick={() => setActiveSub(sub.id)}
+                      onClick={() => {
+                        if (locked) {
+                          warning('Sub-bab Terkunci', 'Selesaikan sub-bab sebelumnya terlebih dahulu.')
+                          return
+                        }
+                        setActiveSub(sub.id)
+                      }}
                       className={`w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm transition-all ${
-                        activeSub === sub.id
+                        locked
+                          ? 'text-ink-5 opacity-60 cursor-not-allowed'
+                          : activeSub === sub.id
                           ? 'bg-teal-50 text-teal-700 font-semibold border border-teal-200'
                           : sub.done
-                          ? 'text-ink-4 hover:bg-ink-9'
-                          : 'text-ink-3 hover:bg-ink-9'
+                          ? 'text-ink-4 hover:bg-ink-9 cursor-pointer'
+                          : 'text-ink-3 hover:bg-ink-9 cursor-pointer'
                       }`}
                     >
                       {sub.done ? (
                         <div className="w-5 h-5 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center flex-shrink-0">
                           <Check className="w-3 h-3" strokeWidth={3} />
+                        </div>
+                      ) : locked ? (
+                        <div className="w-5 h-5 rounded-full bg-ink-8 text-ink-5 flex items-center justify-center flex-shrink-0">
+                          <Lock className="w-2.5 h-2.5" />
                         </div>
                       ) : (
                         <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 ${activeSub === sub.id ? 'border-teal-600 bg-teal-600' : 'border-ink-6'}`}>
@@ -327,7 +354,8 @@ export default function ModuleDetailPage() {
                       )}
                       <span className="truncate">{sub.title}</span>
                     </button>
-                  ))}
+                    )
+                  })}
                 </div>
               </motion.div>
             )}
@@ -349,28 +377,67 @@ export default function ModuleDetailPage() {
                   {activeContent?.heading || activeSubData?.title || 'Materi'}
                 </h1>
 
-                <div className="prose max-w-none text-ink-3 text-[0.9375rem] leading-relaxed">
-                  {activeContent?.body || (
-                    <p className="text-ink-4">Konten untuk sub-bab ini sedang disiapkan. Silakan cek kembali nanti.</p>
-                  )}
-                </div>
+                {activeIsLocked ? (
+                  /* ─── Locked content ─── */
+                  <div className="relative">
+                    {/* Blurred preview */}
+                    <div className="select-none pointer-events-none blur-[6px] opacity-40 max-h-[200px] overflow-hidden">
+                      <div className="prose max-w-none text-ink-3 text-[0.9375rem] leading-relaxed">
+                        {activeContent?.body || (
+                          <p className="text-ink-4">Konten untuk sub-bab ini sedang disiapkan.</p>
+                        )}
+                      </div>
+                    </div>
+                    {/* Gradient fade */}
+                    <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-white to-transparent" />
+                    {/* Lock message */}
+                    <div className="mt-4 p-5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0">
+                        <Lock className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-amber-800">Sub-bab Terkunci</h3>
+                        <p className="text-xs text-amber-700/80 mt-1 leading-relaxed">
+                          Selesaikan sub-bab sebelumnya terlebih dahulu untuk membuka materi ini. Pelajari materi secara berurutan agar pemahaman kamu lebih solid.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* ─── Unlocked content ─── */
+                  <div className="prose max-w-none text-ink-3 text-[0.9375rem] leading-relaxed">
+                    {activeContent?.body || (
+                      <p className="text-ink-4">Konten untuk sub-bab ini sedang disiapkan. Silakan cek kembali nanti.</p>
+                    )}
+                  </div>
+                )}
 
                 {/* Mark complete */}
                 <div className="mt-8 pt-6 border-t border-ink-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
                     <h3 className="text-sm font-bold text-ink">Sudah memahami materi ini?</h3>
-                    <p className="text-xs text-ink-5">Tandai sebagai selesai untuk melanjutkan ke sub-bab berikutnya.</p>
+                    <p className="text-xs text-ink-5">
+                      {activeIsLocked
+                        ? 'Selesaikan sub-bab sebelumnya untuk membuka materi ini.'
+                        : 'Tandai sebagai selesai untuk melanjutkan ke sub-bab berikutnya.'}
+                    </p>
                   </div>
                   <button
                     onClick={handleMarkDone}
-                    className={`px-6 py-2.5 text-sm font-semibold rounded-xl transition-colors flex items-center gap-2 cursor-pointer ${
-                      activeSubData?.done
-                        ? 'bg-teal-100 text-teal-700 hover:bg-teal-200'
-                        : 'bg-teal-600 text-white hover:bg-teal-700'
+                    disabled={activeIsLocked}
+                    className={`px-6 py-2.5 text-sm font-semibold rounded-xl transition-colors flex items-center gap-2 ${
+                      activeIsLocked
+                        ? 'bg-ink-8 text-ink-5 cursor-not-allowed'
+                        : activeSubData?.done
+                        ? 'bg-teal-100 text-teal-700 hover:bg-teal-200 cursor-pointer'
+                        : 'bg-teal-600 text-white hover:bg-teal-700 cursor-pointer'
                     }`}
                   >
-                    <Check className="w-4 h-4" />
-                    {activeSubData?.done ? 'Sudah Selesai ✓' : 'Tandai Selesai'}
+                    {activeIsLocked ? (
+                      <><Lock className="w-4 h-4" /> Terkunci</>
+                    ) : (
+                      <><Check className="w-4 h-4" /> {activeSubData?.done ? 'Sudah Selesai' : 'Tandai Selesai'}</>
+                    )}
                   </button>
                 </div>
               </div>
