@@ -391,12 +391,25 @@ export default function OnboardingTour() {
       return
     }
 
-    const el = document.querySelector(currentStep.target)
+    const el = document.querySelector(currentStep.target) as HTMLElement | null
     if (el) {
       const rect = el.getBoundingClientRect()
-      setTargetRect(rect)
-      // Scroll element into view if needed
-      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      const isVisible =
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= window.innerHeight &&
+        rect.right <= window.innerWidth
+
+      if (!isVisible) {
+        // Scroll into view, then re-measure after scroll finishes
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        setTimeout(() => {
+          const newRect = el.getBoundingClientRect()
+          setTargetRect(newRect)
+        }, 400)
+      } else {
+        setTargetRect(rect)
+      }
     } else {
       setTargetRect(null)
     }
@@ -421,6 +434,16 @@ export default function OnboardingTour() {
   useEffect(() => {
     if (activeTour) {
       document.body.style.overflow = 'hidden'
+      // Also block scroll on main content container
+      const mainContent = document.querySelector('main') || document.querySelector('[class*="overflow"]')
+      if (mainContent instanceof HTMLElement) {
+        const prev = mainContent.style.overflow
+        mainContent.style.overflow = 'hidden'
+        return () => {
+          document.body.style.overflow = ''
+          mainContent.style.overflow = prev
+        }
+      }
       return () => { document.body.style.overflow = '' }
     }
   }, [activeTour])
