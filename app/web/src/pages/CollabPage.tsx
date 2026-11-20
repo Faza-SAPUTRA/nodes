@@ -276,7 +276,7 @@ export default function CollabPage() {
   }
 
   function handleBack() {
-    navigate(-1)
+    navigate('/app')
   }
 
   function handleEndSession() {

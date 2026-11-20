@@ -1,9 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   MousePointer2, Square, Type, Hand, Pen, Plus, Layers, Save,
   ZoomIn, ZoomOut, ChevronRight, X, Trash2, Eye, EyeOff, Copy, ArrowUp, ArrowDown,
-  Undo2, Redo2, Lock, Unlock,
+  Undo2, Redo2, Lock, Unlock, LayoutDashboard, BookOpen, Users, ChevronLeft,
 } from 'lucide-react'
 import { useToast } from '../components/ui/Toast'
 
@@ -95,6 +96,8 @@ const MAX_HISTORY = 50
 export default function CanvasPage() {
   const [activeTool, setActiveTool] = useState<ToolId>('select')
   const [showNewModal, setShowNewModal] = useState(false)
+  const [showNavMenu, setShowNavMenu] = useState(false)
+  const navigate = useNavigate()
 
   // Projects with their own layers
   const [projects, setProjects] = useState<ProjectItem[]>([
@@ -190,6 +193,17 @@ export default function CanvasPage() {
       })
     }
   }, [])
+
+  /* ─── Close nav menu on outside click ─── */
+  useEffect(() => {
+    if (!showNavMenu) return
+    function handleClick(e: MouseEvent) {
+      const target = e.target as HTMLElement
+      if (!target.closest('[data-nav-menu]')) setShowNavMenu(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [showNavMenu])
 
   /* ─── Project switching ─── */
   function switchProject(projectId: number) {
@@ -600,6 +614,52 @@ export default function CanvasPage() {
       {/* ═══ Top toolbar ═══ */}
       <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-ink-7 shrink-0">
         <div className="flex items-center gap-1">
+          {/* Back + Logo + Nav */}
+          <div className="relative flex items-center gap-1 mr-2" data-nav-menu>
+            <button
+              onClick={() => navigate('/app')}
+              className="flex items-center justify-center w-8 h-8 rounded-lg text-ink-4 hover:bg-ink-9 hover:text-ink transition-colors"
+              title="Kembali ke Dashboard"
+              aria-label="Kembali ke Dashboard"
+            >
+              <ChevronLeft className="w-[18px] h-[18px]" />
+            </button>
+            <button
+              onClick={() => setShowNavMenu(!showNavMenu)}
+              className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sm font-extrabold tracking-tighter text-ink hover:bg-ink-9 transition-colors"
+              aria-label="Menu navigasi"
+              aria-expanded={showNavMenu}
+            >
+              n<span className="text-teal-600">.</span>
+              <ChevronRight className={`w-3 h-3 text-ink-5 transition-transform ${showNavMenu ? 'rotate-90' : ''}`} />
+            </button>
+            <AnimatePresence>
+              {showNavMenu && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  className="absolute top-full left-0 mt-1 w-52 bg-white border border-ink-7 rounded-xl shadow-xl z-50 overflow-hidden"
+                >
+                  {[
+                    { to: '/app', icon: LayoutDashboard, label: 'Dashboard' },
+                    { to: '/app/modul', icon: BookOpen, label: 'Modul Belajar' },
+                    { to: '/app/kolaborasi', icon: Users, label: 'Kolaborasi' },
+                  ].map(item => (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-ink-4 hover:bg-ink-9 hover:text-ink transition-colors cursor-pointer"
+                    >
+                      <item.icon className="w-4 h-4" />
+                      {item.label}
+                    </Link>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          <div className="w-px h-5 bg-ink-7 mr-1" />
           {tools.map((t) => (
             <button
               key={t.id}
@@ -936,25 +996,23 @@ export default function CanvasPage() {
             {/* Selection handles */}
             {selectedLayerData && selectedLayerData.visible && activeTool === 'select' && !selectedLayerData.locked && (
               <>
-                {/* Resize handles */}
-                {['nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'].map(handle => {
+                {/* Resize handles — only corner handles, smaller & subtle until hover */}
+                {['nw', 'ne', 'sw', 'se'].map(handle => {
                   const l = selectedLayerData
                   let left = l.x, top = l.y
-                  const size = 8
+                  const size = 7
                   const offset = -size / 2
                   if (handle.includes('e')) left = l.x + l.w
-                  else if (!handle.includes('w')) left = l.x + l.w / 2
                   if (handle.includes('s')) top = l.y + l.h
-                  else if (!handle.includes('n')) top = l.y + l.h / 2
 
                   const cursors: Record<string, string> = {
                     nw: 'nwse-resize', ne: 'nesw-resize', sw: 'nesw-resize', se: 'nwse-resize',
-                    n: 'ns-resize', s: 'ns-resize', e: 'ew-resize', w: 'ew-resize',
                   }
 
                   return (
                     <div
                       key={handle}
+                      className="opacity-70 hover:opacity-100 transition-opacity"
                       style={{
                         position: 'absolute',
                         left: left + offset,
@@ -963,7 +1021,7 @@ export default function CanvasPage() {
                         height: size,
                         backgroundColor: 'white',
                         border: '2px solid #0D9488',
-                        borderRadius: 2,
+                        borderRadius: '50%',
                         cursor: cursors[handle],
                         zIndex: 100,
                         pointerEvents: 'auto',
@@ -973,21 +1031,56 @@ export default function CanvasPage() {
                   )
                 })}
 
-                {/* Size label */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    left: selectedLayerData.x + selectedLayerData.w / 2,
-                    top: selectedLayerData.y + selectedLayerData.h + 12,
-                    transform: 'translateX(-50%)',
-                    zIndex: 100,
-                    pointerEvents: 'none',
-                  }}
-                >
-                  <span className="px-1.5 py-0.5 bg-teal-600 text-white text-[9px] font-bold rounded">
-                    {selectedLayerData.w} × {selectedLayerData.h}
-                  </span>
-                </div>
+                {/* Edge resize zones — invisible but clickable for n/s/e/w resize */}
+                {['n', 's', 'e', 'w'].map(handle => {
+                  const l = selectedLayerData
+                  const edgeThickness = 6
+                  let left = l.x, top = l.y, width = l.w, height = l.h
+
+                  if (handle === 'n') { top = l.y - edgeThickness / 2; height = edgeThickness; }
+                  else if (handle === 's') { top = l.y + l.h - edgeThickness / 2; height = edgeThickness; }
+                  else if (handle === 'w') { left = l.x - edgeThickness / 2; width = edgeThickness; }
+                  else if (handle === 'e') { left = l.x + l.w - edgeThickness / 2; width = edgeThickness; }
+
+                  const cursors: Record<string, string> = {
+                    n: 'ns-resize', s: 'ns-resize', e: 'ew-resize', w: 'ew-resize',
+                  }
+
+                  return (
+                    <div
+                      key={handle}
+                      style={{
+                        position: 'absolute',
+                        left,
+                        top,
+                        width,
+                        height,
+                        cursor: cursors[handle],
+                        zIndex: 99,
+                        pointerEvents: 'auto',
+                      }}
+                      onMouseDown={(e) => handleResizeStart(e, handle)}
+                    />
+                  )
+                })}
+
+                {/* Size label — only during drag/resize */}
+                {(isDragging || isResizing) && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: selectedLayerData.x + selectedLayerData.w / 2,
+                      top: selectedLayerData.y + selectedLayerData.h + 10,
+                      transform: 'translateX(-50%)',
+                      zIndex: 100,
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    <span className="px-1.5 py-0.5 bg-teal-600 text-white text-[9px] font-bold rounded shadow-sm">
+                      {selectedLayerData.w} × {selectedLayerData.h}
+                    </span>
+                  </div>
+                )}
               </>
             )}
           </div>
