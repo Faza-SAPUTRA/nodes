@@ -1,7 +1,81 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, ChevronLeft, X, Sparkles } from 'lucide-react'
+import { ChevronRight, ChevronLeft, X } from 'lucide-react'
+
+/* ─── Neko SVG for tour (inline, small) ─── */
+function NekoGuide({ expression = 'happy' }: { expression?: 'happy' | 'excited' | 'wink' | 'thinking' }) {
+  return (
+    <svg viewBox="0 0 64 64" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Body */}
+      <ellipse cx="32" cy="40" rx="18" ry="14" fill="#0F172A" />
+      {/* Head */}
+      <circle cx="32" cy="26" r="14" fill="#0F172A" />
+      {/* Ears */}
+      <polygon points="20,16 14,4 26,12" fill="#0F172A" />
+      <polygon points="44,16 50,4 38,12" fill="#0F172A" />
+      <polygon points="21,15 16,6 25,12" fill="#1E293B" />
+      <polygon points="43,15 48,6 39,12" fill="#1E293B" />
+      {/* Eyes - expression based */}
+      {expression === 'happy' && (
+        <>
+          <circle cx="26" cy="24" r="3" fill="#0D9488" />
+          <circle cx="38" cy="24" r="3" fill="#0D9488" />
+          <circle cx="27" cy="23" r="1" fill="white" />
+          <circle cx="39" cy="23" r="1" fill="white" />
+        </>
+      )}
+      {expression === 'excited' && (
+        <>
+          <circle cx="26" cy="24" r="3.5" fill="#0D9488" />
+          <circle cx="38" cy="24" r="3.5" fill="#0D9488" />
+          <circle cx="27.5" cy="22.5" r="1.5" fill="white" />
+          <circle cx="39.5" cy="22.5" r="1.5" fill="white" />
+        </>
+      )}
+      {expression === 'wink' && (
+        <>
+          <circle cx="26" cy="24" r="3" fill="#0D9488" />
+          <circle cx="27" cy="23" r="1" fill="white" />
+          <line x1="36" y1="24" x2="40" y2="24" stroke="#0D9488" strokeWidth="2" strokeLinecap="round" />
+        </>
+      )}
+      {expression === 'thinking' && (
+        <>
+          <circle cx="26" cy="23" r="3" fill="#0D9488" />
+          <circle cx="38" cy="25" r="3" fill="#0D9488" />
+          <circle cx="27" cy="22" r="1" fill="white" />
+          <circle cx="39" cy="24" r="1" fill="white" />
+        </>
+      )}
+      {/* Nose */}
+      <ellipse cx="32" cy="28" rx="1.5" ry="1" fill="#64748B" />
+      {/* Mouth - happy */}
+      {(expression === 'happy' || expression === 'excited') && (
+        <path d="M30 29.5 Q32 31.5 34 29.5" stroke="#64748B" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+      )}
+      {expression === 'wink' && (
+        <path d="M29 29.5 Q32 32 35 29.5" stroke="#64748B" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+      )}
+      {expression === 'thinking' && (
+        <ellipse cx="34" cy="30" rx="2" ry="1.2" fill="#64748B" opacity="0.5" />
+      )}
+      {/* Whiskers */}
+      <line x1="12" y1="26" x2="24" y2="27" stroke="#475569" strokeWidth="0.6" />
+      <line x1="12" y1="29" x2="24" y2="29" stroke="#475569" strokeWidth="0.6" />
+      <line x1="40" y1="27" x2="52" y2="26" stroke="#475569" strokeWidth="0.6" />
+      <line x1="40" y1="29" x2="52" y2="29" stroke="#475569" strokeWidth="0.6" />
+      {/* Tail */}
+      <path d="M50 40 Q56 32 52 24" stroke="#0F172A" strokeWidth="4" fill="none" strokeLinecap="round" />
+      {/* Paws */}
+      <ellipse cx="22" cy="52" rx="5" ry="3" fill="#1E293B" />
+      <ellipse cx="42" cy="52" rx="5" ry="3" fill="#1E293B" />
+      {/* Collar */}
+      <path d="M20 34 Q32 38 44 34" stroke="#0D9488" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <circle cx="32" cy="36" r="2" fill="#0D9488" />
+    </svg>
+  )
+}
 
 /* ─── Types ─── */
 interface TourStep {
@@ -13,6 +87,8 @@ interface TourStep {
   desc: string
   /** Position of tooltip relative to target */
   placement: 'top' | 'bottom' | 'left' | 'right' | 'center'
+  /** Neko's expression for this step */
+  nekoExpression?: 'happy' | 'excited' | 'wink' | 'thinking'
   /** Optional: navigate to this route before showing step */
   route?: string
   /** Optional: delay ms before showing (for animations to settle) */
@@ -36,60 +112,70 @@ const tours: Record<string, Tour> = {
         title: 'Selamat datang di NODES',
         desc: 'Platform belajar UI/UX interaktif untuk mahasiswa Teknik Informatika. Yuk, kenalan sama fitur-fitur utamanya.',
         placement: 'center',
+        nekoExpression: 'excited',
       },
       {
         target: 'aside[role="navigation"]',
         title: 'Sidebar Navigasi',
         desc: 'Ini menu utama kamu. Akses Dashboard, Modul Belajar, Canvas Praktik, dan Kolaborasi dari sini. Klik chevron di bawah untuk expand/collapse.',
         placement: 'right',
+        nekoExpression: 'happy',
       },
       {
         target: '[data-tour="search"]',
         title: 'Pencarian Cepat',
         desc: 'Cari modul atau materi dengan cepat. Tekan Ctrl+K untuk membuka pencarian langsung dari keyboard.',
         placement: 'bottom',
+        nekoExpression: 'thinking',
       },
       {
         target: '[data-tour="streak"]',
         title: 'Streak Harian',
         desc: 'Pantau konsistensi belajar kamu di sini. Login setiap hari untuk menjaga streak dan mendapatkan badge.',
         placement: 'left',
+        nekoExpression: 'happy',
       },
       {
         target: '[data-tour="continue-card"]',
         title: 'Lanjutkan Belajar',
         desc: 'Card ini menunjukkan modul terakhir yang sedang kamu pelajari. Klik "Lanjutkan" untuk langsung melanjutkan dari titik terakhir.',
         placement: 'bottom',
+        nekoExpression: 'wink',
       },
       {
         target: '[data-tour="modules-recent"]',
         title: 'Modul Terbaru',
         desc: 'Lihat modul-modul yang baru diakses. Klik "Lihat Semua" untuk membuka katalog lengkap.',
         placement: 'top',
+        nekoExpression: 'happy',
       },
       {
         target: '[data-tour="sidebar-canvas"]',
         title: 'Canvas Praktik',
         desc: 'Fitur andalan NODES — canvas interaktif mirip Figma. Langsung praktik bikin desain di sini.',
         placement: 'right',
+        nekoExpression: 'excited',
       },
       {
         target: '[data-tour="sidebar-collab"]',
         title: 'Ruang Kolaborasi',
         desc: 'Review dan beri feedback desain bersama teman dan dosen. Pin komentar langsung di atas preview.',
         placement: 'right',
+        nekoExpression: 'happy',
       },
       {
         target: '[data-tour="sidebar-profile"]',
         title: 'Profil Kamu',
         desc: 'Lihat progress, badge yang didapat, dan atur preferensi akun di halaman profil.',
         placement: 'right',
+        nekoExpression: 'thinking',
       },
       {
         target: '[data-tour="welcome"]',
         title: 'Kamu siap!',
         desc: 'Selamat belajar di NODES. Kamu bisa mengulang tour ini kapan saja dari menu profil. Sekarang, mulai eksplorasi!',
         placement: 'center',
+        nekoExpression: 'wink',
       },
     ],
   },
@@ -102,18 +188,21 @@ const tours: Record<string, Tour> = {
         title: 'Cari Modul',
         desc: 'Ketik kata kunci untuk mencari modul berdasarkan judul atau deskripsi.',
         placement: 'bottom',
+        nekoExpression: 'thinking',
       },
       {
         target: '[data-tour="modules-filter"]',
         title: 'Filter Kategori',
         desc: 'Filter modul berdasarkan kategori: Fondasi, Inti, Lanjutan, Proyek, atau Evaluasi.',
         placement: 'bottom',
+        nekoExpression: 'happy',
       },
       {
         target: '[data-tour="modules-grid"]',
         title: 'Kartu Modul',
         desc: 'Setiap kartu menampilkan progress, jumlah sub-bab, bobot nilai, dan status. Klik untuk membuka modul.',
         placement: 'top',
+        nekoExpression: 'wink',
       },
     ],
   },
@@ -126,18 +215,21 @@ const tours: Record<string, Tour> = {
         title: 'Toolbar',
         desc: 'Pilih tool — Select (V), Frame (F), Text (T), Hand (H), atau Pen (P). Shortcut keyboard juga tersedia.',
         placement: 'bottom',
+        nekoExpression: 'excited',
       },
       {
         target: '[data-tour="canvas-projects"]',
         title: 'Panel Proyek',
         desc: 'Daftar proyek kamu ada di sini. Klik proyek untuk beralih, atau buat proyek baru dengan tombol +.',
         placement: 'right',
+        nekoExpression: 'happy',
       },
       {
         target: '[data-tour="canvas-area"]',
         title: 'Area Canvas',
         desc: 'Ini area kerja utama. Klik dan drag untuk membuat elemen, scroll untuk pan, Ctrl+scroll untuk zoom.',
         placement: 'top',
+        nekoExpression: 'wink',
       },
     ],
   },
@@ -404,20 +496,24 @@ export default function OnboardingTour() {
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-500 to-teal-600" />
 
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-5 h-5 text-teal-600" />
-                </div>
+                <motion.div
+                  className="w-12 h-12 flex-shrink-0"
+                  animate={{ y: [0, -3, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  <NekoGuide expression="excited" />
+                </motion.div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-bold text-ink mb-1">Baru di NODES?</h3>
+                  <h3 className="text-sm font-bold text-ink mb-1">Hai, aku Neko!</h3>
                   <p className="text-xs text-ink-4 leading-relaxed mb-3">
-                    Ikuti tour singkat untuk mengenal fitur-fitur utama platform ini. Hanya butuh 1 menit.
+                    Baru di NODES? Ikuti tour singkat bersamaku untuk mengenal fitur-fitur utama. Hanya butuh 1 menit.
                   </p>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => startTour('welcome')}
                       className="px-4 py-2 bg-teal-600 text-white text-xs font-semibold rounded-lg hover:bg-teal-700 transition-colors cursor-pointer"
                     >
-                      Mulai Tour
+                      Tour bersama Neko
                     </button>
                     <button
                       onClick={() => {
@@ -486,9 +582,21 @@ export default function OnboardingTour() {
                 </div>
 
                 <div className="p-5">
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="text-sm font-bold text-ink leading-snug pr-6">{currentStep.title}</h3>
+                  {/* Header with Neko */}
+                  <div className="flex items-start gap-3 mb-2">
+                    <motion.div
+                      className="w-10 h-10 flex-shrink-0"
+                      key={`neko-${step}`}
+                      initial={{ scale: 0.8, rotate: -10 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 15 }}
+                    >
+                      <NekoGuide expression={currentStep.nekoExpression || 'happy'} />
+                    </motion.div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-bold text-ink leading-snug">{currentStep.title}</h3>
+                      <span className="text-[9px] text-teal-600 font-semibold">Neko</span>
+                    </div>
                     <button
                       onClick={skipTour}
                       className="w-6 h-6 rounded-lg hover:bg-ink-9 flex items-center justify-center text-ink-5 hover:text-ink transition-colors flex-shrink-0 cursor-pointer"
