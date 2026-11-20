@@ -3,76 +3,84 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight, ChevronLeft, X } from 'lucide-react'
 
-/* ─── Neko SVG for tour (inline, small) ─── */
+/* ─── Neko SVG for tour — head-only version (clean at small sizes) ─── */
 function NekoGuide({ expression = 'happy' }: { expression?: 'happy' | 'excited' | 'wink' | 'thinking' }) {
   return (
     <svg viewBox="0 0 64 64" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Body */}
-      <ellipse cx="32" cy="40" rx="18" ry="14" fill="#0F172A" />
+      {/* Background circle */}
+      <circle cx="32" cy="34" r="28" fill="#F0FDFA" />
       {/* Head */}
-      <circle cx="32" cy="26" r="14" fill="#0F172A" />
-      {/* Ears */}
-      <polygon points="20,16 14,4 26,12" fill="#0F172A" />
-      <polygon points="44,16 50,4 38,12" fill="#0F172A" />
-      <polygon points="21,15 16,6 25,12" fill="#1E293B" />
-      <polygon points="43,15 48,6 39,12" fill="#1E293B" />
+      <circle cx="32" cy="36" r="18" fill="#0F172A" />
+      {/* Left ear */}
+      <polygon points="16,24 8,6 26,18" fill="#0F172A" />
+      <polygon points="17,22 11,8 24,18" fill="#1E293B" />
+      {/* Right ear */}
+      <polygon points="48,24 56,6 38,18" fill="#0F172A" />
+      <polygon points="47,22 53,8 40,18" fill="#1E293B" />
+      {/* Inner ear teal accent */}
+      <polygon points="18,21 13,10 23,18" fill="#2DD4BF" opacity="0.3" />
+      <polygon points="46,21 51,10 41,18" fill="#2DD4BF" opacity="0.3" />
       {/* Eyes - expression based */}
       {expression === 'happy' && (
         <>
-          <circle cx="26" cy="24" r="3" fill="#0D9488" />
-          <circle cx="38" cy="24" r="3" fill="#0D9488" />
-          <circle cx="27" cy="23" r="1" fill="white" />
-          <circle cx="39" cy="23" r="1" fill="white" />
+          <circle cx="24" cy="34" r="4" fill="#0D9488" />
+          <circle cx="40" cy="34" r="4" fill="#0D9488" />
+          <circle cx="25.5" cy="32.5" r="1.5" fill="white" />
+          <circle cx="41.5" cy="32.5" r="1.5" fill="white" />
         </>
       )}
       {expression === 'excited' && (
         <>
-          <circle cx="26" cy="24" r="3.5" fill="#0D9488" />
-          <circle cx="38" cy="24" r="3.5" fill="#0D9488" />
-          <circle cx="27.5" cy="22.5" r="1.5" fill="white" />
-          <circle cx="39.5" cy="22.5" r="1.5" fill="white" />
+          <circle cx="24" cy="34" r="5" fill="#0D9488" />
+          <circle cx="40" cy="34" r="5" fill="#0D9488" />
+          <circle cx="26" cy="32" r="2" fill="white" />
+          <circle cx="42" cy="32" r="2" fill="white" />
+          {/* Sparkle */}
+          <circle cx="48" cy="22" r="1.5" fill="#FBBF24" />
+          <circle cx="52" cy="26" r="1" fill="#FBBF24" />
         </>
       )}
       {expression === 'wink' && (
         <>
-          <circle cx="26" cy="24" r="3" fill="#0D9488" />
-          <circle cx="27" cy="23" r="1" fill="white" />
-          <line x1="36" y1="24" x2="40" y2="24" stroke="#0D9488" strokeWidth="2" strokeLinecap="round" />
+          <circle cx="24" cy="34" r="4" fill="#0D9488" />
+          <circle cx="25.5" cy="32.5" r="1.5" fill="white" />
+          <path d="M36 34 Q38 32 40 34" stroke="#0D9488" strokeWidth="2.5" fill="none" strokeLinecap="round" />
         </>
       )}
       {expression === 'thinking' && (
         <>
-          <circle cx="26" cy="23" r="3" fill="#0D9488" />
-          <circle cx="38" cy="25" r="3" fill="#0D9488" />
-          <circle cx="27" cy="22" r="1" fill="white" />
-          <circle cx="39" cy="24" r="1" fill="white" />
+          <circle cx="24" cy="33" r="4" fill="#0D9488" />
+          <circle cx="40" cy="35" r="4" fill="#0D9488" />
+          <circle cx="25.5" cy="31.5" r="1.5" fill="white" />
+          <circle cx="41.5" cy="33.5" r="1.5" fill="white" />
+          {/* Thought bubble */}
+          <circle cx="52" cy="20" r="3" fill="#CBD5E1" opacity="0.6" />
+          <circle cx="48" cy="25" r="1.5" fill="#CBD5E1" opacity="0.4" />
         </>
       )}
       {/* Nose */}
-      <ellipse cx="32" cy="28" rx="1.5" ry="1" fill="#64748B" />
-      {/* Mouth - happy */}
+      <ellipse cx="32" cy="39" rx="2" ry="1.5" fill="#64748B" />
+      {/* Mouth */}
       {(expression === 'happy' || expression === 'excited') && (
-        <path d="M30 29.5 Q32 31.5 34 29.5" stroke="#64748B" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+        <path d="M28 41 Q32 44.5 36 41" stroke="#64748B" strokeWidth="1.2" fill="none" strokeLinecap="round" />
       )}
       {expression === 'wink' && (
-        <path d="M29 29.5 Q32 32 35 29.5" stroke="#64748B" strokeWidth="0.8" fill="none" strokeLinecap="round" />
+        <path d="M27 41 Q32 45 37 41" stroke="#64748B" strokeWidth="1.2" fill="none" strokeLinecap="round" />
       )}
       {expression === 'thinking' && (
-        <ellipse cx="34" cy="30" rx="2" ry="1.2" fill="#64748B" opacity="0.5" />
+        <ellipse cx="35" cy="42" rx="2.5" ry="1.5" fill="#64748B" opacity="0.5" />
       )}
       {/* Whiskers */}
-      <line x1="12" y1="26" x2="24" y2="27" stroke="#475569" strokeWidth="0.6" />
-      <line x1="12" y1="29" x2="24" y2="29" stroke="#475569" strokeWidth="0.6" />
-      <line x1="40" y1="27" x2="52" y2="26" stroke="#475569" strokeWidth="0.6" />
-      <line x1="40" y1="29" x2="52" y2="29" stroke="#475569" strokeWidth="0.6" />
-      {/* Tail */}
-      <path d="M50 40 Q56 32 52 24" stroke="#0F172A" strokeWidth="4" fill="none" strokeLinecap="round" />
-      {/* Paws */}
-      <ellipse cx="22" cy="52" rx="5" ry="3" fill="#1E293B" />
-      <ellipse cx="42" cy="52" rx="5" ry="3" fill="#1E293B" />
-      {/* Collar */}
-      <path d="M20 34 Q32 38 44 34" stroke="#0D9488" strokeWidth="2" fill="none" strokeLinecap="round" />
-      <circle cx="32" cy="36" r="2" fill="#0D9488" />
+      <line x1="6" y1="36" x2="20" y2="38" stroke="#475569" strokeWidth="0.8" opacity="0.7" />
+      <line x1="6" y1="40" x2="20" y2="40" stroke="#475569" strokeWidth="0.8" opacity="0.7" />
+      <line x1="44" y1="38" x2="58" y2="36" stroke="#475569" strokeWidth="0.8" opacity="0.7" />
+      <line x1="44" y1="40" x2="58" y2="40" stroke="#475569" strokeWidth="0.8" opacity="0.7" />
+      {/* Blush spots */}
+      <circle cx="18" cy="40" r="3" fill="#F472B6" opacity="0.15" />
+      <circle cx="46" cy="40" r="3" fill="#F472B6" opacity="0.15" />
+      {/* Collar (just at the chin) */}
+      <path d="M18 50 Q32 56 46 50" stroke="#0D9488" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+      <circle cx="32" cy="53" r="2.5" fill="#0D9488" />
     </svg>
   )
 }
