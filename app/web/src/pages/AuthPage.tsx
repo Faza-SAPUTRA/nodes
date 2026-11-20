@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mail, Lock, User, Eye, EyeOff, ArrowRight } from 'lucide-react'
+import { Mail, Lock, User, Eye, EyeOff, ArrowRight, Ruler, Palette } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { useToast } from '../components/ui/Toast'
 
@@ -132,8 +132,8 @@ export default function AuthPage() {
             {/* Floating cards */}
             <div className="mt-10 space-y-3">
               {[
-                { icon: '📐', title: 'Grid Systems', sub: 'Modul 3 · 12 menit', pct: 70 },
-                { icon: '🎨', title: 'Color Theory', sub: 'Modul 5 · 18 menit', badge: 'Baru' },
+                { icon: 'ruler' as const, title: 'Grid Systems', sub: 'Modul 3 · 12 menit', pct: 70 },
+                { icon: 'palette' as const, title: 'Color Theory', sub: 'Modul 5 · 18 menit', badge: 'Baru' },
                 { icon: null, title: '3 teman online', sub: 'Sedang mengerjakan proyek', live: true },
               ].map((card, i) => (
                 <motion.div
@@ -144,7 +144,7 @@ export default function AuthPage() {
                   className="flex items-center gap-3 p-3 bg-white/[.06] backdrop-blur-sm border border-white/[.08] rounded-xl"
                 >
                   {card.icon ? (
-                    <div className="w-10 h-10 rounded-lg bg-white/[.08] flex items-center justify-center text-lg">{card.icon}</div>
+                    <div className="w-10 h-10 rounded-lg bg-white/[.08] flex items-center justify-center text-teal-300">{card.icon === 'ruler' ? <Ruler className="w-5 h-5" /> : <Palette className="w-5 h-5" />}</div>
                   ) : (
                     <div className="flex -space-x-2">
                       {['bg-teal-600', 'bg-teal-500', 'bg-teal-700'].map((c, j) => (

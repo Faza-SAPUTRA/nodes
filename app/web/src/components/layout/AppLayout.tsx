@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
+import CatMascot from '../ui/CatMascot'
 import { useSidebarStore } from '../../store/sidebarStore'
 import clsx from 'clsx'
 
@@ -29,6 +30,7 @@ export default function AppLayout() {
           <Outlet />
         </div>
       </main>
+      <CatMascot />
     </div>
   )
 }

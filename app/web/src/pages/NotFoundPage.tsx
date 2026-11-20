@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Home, ArrowLeft } from 'lucide-react'
+import { Home, ArrowLeft, SearchX } from 'lucide-react'
 
 export default function NotFoundPage() {
   return (
@@ -18,7 +18,7 @@ export default function NotFoundPage() {
           </span>
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-20 h-20 rounded-2xl bg-teal-50 border-2 border-teal-200 flex items-center justify-center">
-              <span className="text-3xl">🔍</span>
+              <SearchX className="w-8 h-8 text-teal-600" />
             </div>
           </div>
         </div>

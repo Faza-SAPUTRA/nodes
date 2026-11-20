@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useInView } from 'framer-motion'
-import { Search, Check, Lock, Clock } from 'lucide-react'
+import { Search, Check, Lock, Clock, BookOpen, Users, Building2, Pencil, Ruler, Palette, Type, ClipboardList, Settings, MousePointer2, Smartphone, FlaskConical, Handshake, Briefcase, Rocket, Trophy } from 'lucide-react'
 import { modulesData, categories } from '../data/modules'
 
 function Reveal({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
@@ -22,6 +22,14 @@ const tagColors: Record<string, string> = {
   Evaluasi: 'bg-red-50 text-red-600 border-red-200',
   UTS: 'bg-orange-50 text-orange-600 border-orange-200',
   UAS: 'bg-rose-50 text-rose-600 border-rose-200',
+}
+
+const moduleIcons: Record<string, typeof BookOpen> = {
+  book: BookOpen, users: Users, building: Building2, pencil: Pencil,
+  ruler: Ruler, palette: Palette, type: Type, clipboard: ClipboardList,
+  settings: Settings, pointer: MousePointer2, smartphone: Smartphone,
+  flask: FlaskConical, handshake: Handshake, briefcase: Briefcase,
+  rocket: Rocket, trophy: Trophy,
 }
 
 export default function ModulesPage() {
@@ -134,7 +142,7 @@ export default function ModulesPage() {
                           strokeDasharray={circumference} strokeDashoffset={offset}
                           strokeLinecap="round" transform="rotate(-90 24 24)" className="transition-all duration-700" />
                       </svg>
-                      <span className="absolute inset-0 flex items-center justify-center text-sm">{m.emoji}</span>
+                      <span className="absolute inset-0 flex items-center justify-center">{(() => { const Icon = moduleIcons[m.emoji]; return Icon ? <Icon className="w-4 h-4 text-ink-4" /> : null })()}</span>
                     </div>
                   </div>
                 </div>

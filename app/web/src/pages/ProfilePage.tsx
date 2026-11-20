@@ -63,18 +63,18 @@ const progressItems: ProgressItem[] = [
 ]
 
 const badges: Badge[] = [
-  { emoji: '🎨', name: 'Color Master', desc: 'Selesaikan modul Teori Warna', earned: true, date: 'Earned today' },
-  { emoji: '📐', name: 'Grid Guru', desc: 'Kuasai layout & grid system', earned: true, date: '5 hari lalu' },
-  { emoji: '🔥', name: 'Streak 7', desc: 'Login 7 hari berturut-turut', earned: true, date: '1 minggu lalu' },
-  { emoji: '💬', name: 'Collaborator', desc: 'Ikut 3 sesi kolaborasi', earned: true, date: '2 minggu lalu' },
-  { emoji: '⚡', name: 'Quick Learner', desc: 'Selesaikan 3 modul dalam 1 minggu', earned: true, date: '2 minggu lalu' },
-  { emoji: '🧩', name: 'First Component', desc: 'Buat komponen pertama di canvas', earned: true, date: '3 minggu lalu' },
-  { emoji: '📝', name: 'Note Taker', desc: 'Tambahkan 10 catatan di modul', earned: true, date: '3 minggu lalu' },
-  { emoji: '🎯', name: 'First Steps', desc: 'Selesaikan modul pertama', earned: true, date: '1 bulan lalu' },
-  { emoji: '🏆', name: 'Design Champion', desc: 'Selesaikan semua modul', earned: false },
-  { emoji: '🌟', name: 'Streak 30', desc: 'Login 30 hari berturut-turut', earned: false },
-  { emoji: '👑', name: 'Mentor', desc: 'Bantu 5 orang di kolaborasi', earned: false },
-  { emoji: '💎', name: 'Perfectionist', desc: 'Skor 100 di semua quiz', earned: false },
+  { emoji: 'CM', name: 'Color Master', desc: 'Selesaikan modul Teori Warna', earned: true, date: 'Hari ini' },
+  { emoji: 'GG', name: 'Grid Guru', desc: 'Kuasai layout & grid system', earned: true, date: '5 hari lalu' },
+  { emoji: 'S7', name: 'Streak 7', desc: 'Login 7 hari berturut-turut', earned: true, date: '1 minggu lalu' },
+  { emoji: 'CB', name: 'Collaborator', desc: 'Ikut 3 sesi kolaborasi', earned: true, date: '2 minggu lalu' },
+  { emoji: 'QL', name: 'Quick Learner', desc: 'Selesaikan 3 modul dalam 1 minggu', earned: true, date: '2 minggu lalu' },
+  { emoji: 'FC', name: 'First Component', desc: 'Buat komponen pertama di canvas', earned: true, date: '3 minggu lalu' },
+  { emoji: 'NT', name: 'Note Taker', desc: 'Tambahkan 10 catatan di modul', earned: true, date: '3 minggu lalu' },
+  { emoji: 'FS', name: 'First Steps', desc: 'Selesaikan modul pertama', earned: true, date: '1 bulan lalu' },
+  { emoji: 'DC', name: 'Design Champion', desc: 'Selesaikan semua modul', earned: false },
+  { emoji: 'S3', name: 'Streak 30', desc: 'Login 30 hari berturut-turut', earned: false },
+  { emoji: 'MT', name: 'Mentor', desc: 'Bantu 5 orang di kolaborasi', earned: false },
+  { emoji: 'PF', name: 'Perfectionist', desc: 'Skor 100 di semua quiz', earned: false },
 ]
 
 const projects: Project[] = [
@@ -85,12 +85,12 @@ const projects: Project[] = [
 
 const timeline: TimelineEvent[] = [
   { color: '#0D9488', title: 'Mulai Sesi 9: Design System', desc: 'Membuat color tokens dan typography scale di canvas', time: 'Hari ini, 14:30' },
-  { color: '#7C3AED', title: 'Menyelesaikan Sesi 8: UI Components', desc: 'Selamat! Kamu mendapat badge "Component Builder" 🧩', time: 'Kemarin, 16:20' },
+  { color: '#7C3AED', title: 'Menyelesaikan Sesi 8: UI Components', desc: 'Badge "Component Builder" berhasil didapatkan.', time: 'Kemarin, 16:20' },
   { color: '#EC4899', title: 'Review Kolaborasi: Visual Hierarchy', desc: 'Memberikan 3 komentar pada desain Budi (Sesi 7)', time: '2 hari lalu, 11:45' },
-  { color: '#F59E0B', title: 'Quiz: Color Theory & Accessibility', desc: 'Skor 90/100 — Great job!', time: '3 hari lalu, 09:15' },
+  { color: '#F59E0B', title: 'Quiz: Color Theory & Accessibility', desc: 'Skor 90/100 — Hasil sangat baik.', time: '3 hari lalu, 09:15' },
 ]
 
-const tags = ['🎨 Visual Design', '📐 Layout', '🧩 Components']
+const tags = ['Visual Design', 'Layout', 'Components']
 
 /* ─── Heatmap helper ─── */
 const heatColors = ['#E2E8F0', 'rgba(13,148,136,.2)', 'rgba(13,148,136,.4)', 'rgba(13,148,136,.7)', '#0D9488']
@@ -375,7 +375,7 @@ function BadgesTab({ badges }: { badges: Badge[] }) {
             b.earned ? 'border-teal-600 bg-teal-600/[.04]' : 'opacity-50 grayscale-[60%] border-ink-7'
           )}
         >
-          <div className="text-[1.75rem] mb-1.5">{b.emoji}</div>
+          <div className="w-10 h-10 mx-auto mb-1.5 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center text-white text-xs font-extrabold tracking-tight">{b.emoji}</div>
           <h4 className="text-xs font-bold mb-0.5">{b.name}</h4>
           <p className="text-[9px] text-ink-4 leading-snug">{b.desc}</p>
           {b.earned ? (
@@ -523,7 +523,7 @@ function SettingsTab() {
           language,
         } as Record<string, unknown>)
       }
-      success('Profil Tersimpan! ✅', 'Perubahan profil berhasil disimpan.')
+      success('Profil Tersimpan', 'Perubahan profil berhasil disimpan.')
     }
   }
 

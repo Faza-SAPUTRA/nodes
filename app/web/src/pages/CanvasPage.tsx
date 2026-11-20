@@ -556,7 +556,7 @@ export default function CanvasPage() {
   }
 
   function handleSave() {
-    success('Tersimpan! 💾', 'Proyek berhasil disimpan.')
+    success('Tersimpan', 'Proyek berhasil disimpan.')
   }
 
   function handleCreateProject() {
@@ -579,7 +579,7 @@ export default function CanvasPage() {
     setNewProjectName('')
     setSelectedTemplate(0)
     setNameError('')
-    success('Proyek Dibuat! 🎉', `"${newProject.name}" berhasil dibuat.`)
+    success('Proyek Dibuat', `"${newProject.name}" berhasil dibuat.`)
   }
 
   /* ─── Canvas cursor ─── */

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, Check, BookOpen, Clock, Award, ChevronDown, Save } from 'lucide-react'
+import { ChevronRight, Check, BookOpen, Clock, Award, ChevronDown, Save, Lightbulb } from 'lucide-react'
 import { modulesData } from '../data/modules'
 import { useToast } from '../components/ui/Toast'
 
@@ -47,7 +47,7 @@ const subBabContent: Record<string, { heading: string; body: React.ReactNode }> 
         </div>
         <div className="p-4 bg-teal-50 border border-teal-200 rounded-xl mt-6">
           <div className="flex items-start gap-2">
-            <span className="text-lg">💡</span>
+            <Lightbulb className="w-5 h-5 text-teal-600 flex-shrink-0" />
             <div><strong className="text-teal-700 text-sm">Tips</strong><p className="text-sm text-teal-700/80 mt-1">Mulai dari komponen yang paling sering digunakan di produk kamu.</p></div>
           </div>
         </div>
@@ -97,7 +97,7 @@ const subBabContent: Record<string, { heading: string; body: React.ReactNode }> 
         </ul>
         <div className="p-4 bg-teal-50 border border-teal-200 rounded-xl mt-6">
           <div className="flex items-start gap-2">
-            <span className="text-lg">💡</span>
+            <Lightbulb className="w-5 h-5 text-teal-600 flex-shrink-0" />
             <div><strong className="text-teal-700 text-sm">Tips Praktis</strong><p className="text-sm text-teal-700/80 mt-1">Mulai dari komponen yang paling sering digunakan: Button, Input, Card, Modal. Pastikan setiap komponen memiliki minimal 3 varian.</p></div>
           </div>
         </div>
@@ -237,7 +237,7 @@ export default function ModuleDetailPage() {
     )
     const currentSub = subBabs.find((s: typeof defaultSubBabs[0]) => s.id === activeSub)
     if (currentSub && !currentSub.done) {
-      success('Sub-bab Selesai! ✅', `"${currentSub.title}" ditandai sebagai selesai.`)
+      success('Sub-bab Selesai', `"${currentSub.title}" ditandai sebagai selesai.`)
       // Auto advance to next incomplete sub-bab
       const nextSub = subBabs.find((s: typeof defaultSubBabs[0]) => s.id > activeSub && !s.done)
       if (nextSub) {

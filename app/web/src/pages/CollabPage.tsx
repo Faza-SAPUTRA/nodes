@@ -84,7 +84,7 @@ type PanelTab = 'chat' | 'activity' | 'votes'
 const deviceIcons = { desktop: Monitor, tablet: Tablet, mobile: Smartphone }
 
 const replyPool = [
-  { name: 'Budi', av: '#7C3AED', letter: 'B', texts: ['Mantap, lanjutin terus! 🔥', 'Oke noted, gua cek dulu ya.', 'Setuju banget sama perubahan ini.', 'Nice, lebih clean sekarang!'] },
+  { name: 'Budi', av: '#7C3AED', letter: 'B', texts: ['Mantap, lanjutin terus.', 'Oke noted, gua cek dulu ya.', 'Setuju banget sama perubahan ini.', 'Lebih clean sekarang.'] },
   { name: 'Sari', av: '#EC4899', letter: 'S', texts: ['Keren! Tinggal responsive aja nih.', 'Warnanya udah bagus menurut gua.', 'Coba tambahin hover state juga.', 'Sip, udah gua mark di pin.'] },
 ]
 
@@ -476,9 +476,9 @@ export default function CollabPage() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 sm:p-8">
                 {[
-                  { emoji: '⚡', title: 'Lightning Fast', desc: 'Optimized for performance', color: '#7C3AED' },
-                  { emoji: '🎨', title: 'Beautiful Design', desc: 'Pixel-perfect components', color: '#0D9488' },
-                  { emoji: '🔒', title: 'Secure', desc: 'Enterprise-grade security', color: '#EC4899' },
+                  { emoji: 'LF', title: 'Lightning Fast', desc: 'Optimized for performance', color: '#7C3AED' },
+                  { emoji: 'BD', title: 'Beautiful Design', desc: 'Pixel-perfect components', color: '#0D9488' },
+                  { emoji: 'SC', title: 'Secure', desc: 'Enterprise-grade security', color: '#EC4899' },
                 ].map(f => (
                   <div key={f.title} className="p-4 rounded-lg border border-ink-7">
                     <div className="w-7 h-7 rounded-md flex items-center justify-center text-sm mb-2" style={{ background: `${f.color}15`, color: f.color }}>{f.emoji}</div>

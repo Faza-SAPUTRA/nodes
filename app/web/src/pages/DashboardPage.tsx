@@ -40,7 +40,7 @@ export default function DashboardPage() {
     { color: 'bg-teal-600', text: <>Menyelesaikan sub-bab <strong>Kontras Warna</strong></>, time: '2 jam lalu' },
     { color: 'bg-blue-500', text: <>Membuat proyek <strong>Landing Page Redesign</strong> di Canvas</>, time: '5 jam lalu' },
     { color: 'bg-purple-500', text: <>Menerima feedback dari <strong>Dosen Surya</strong></>, time: 'Kemarin' },
-    { color: 'bg-green-500', text: <>Menyelesaikan modul <strong>Grid Systems</strong> 🎉</>, time: '2 hari lalu' },
+    { color: 'bg-green-500', text: <>Menyelesaikan modul <strong>Grid Systems</strong></>, time: '2 hari lalu' },
   ]
 
   const online = [
@@ -68,8 +68,8 @@ export default function DashboardPage() {
         <section className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-2">
           <div>
             <span className="text-sm text-ink-5">{greeting}</span>
-            <h1 className="text-3xl font-extrabold text-ink tracking-tight mt-1">{displayName().split(' ')[0]} <span className="inline-block animate-[wave_.5s_ease-in-out_2]">👋</span></h1>
-            <p className="text-sm text-ink-4 mt-1">Kamu punya <strong className="text-ink">8 sesi</strong> yang belum selesai. Yuk lanjutkan!</p>
+            <h1 className="text-3xl font-extrabold text-ink tracking-tight mt-1">{displayName().split(' ')[0]}</h1>
+            <p className="text-sm text-ink-4 mt-1">Kamu punya <strong className="text-ink">8 sesi</strong> yang belum selesai. Lanjutkan belajar.</p>
           </div>
           <div className="flex items-center gap-4">
             <div className="relative w-[100px] h-[100px]">

@@ -12,7 +12,7 @@ function slugify(title: string) {
 const notifications = [
   { id: 1, title: 'Modul baru tersedia', desc: 'Interaction Design sudah bisa diakses', time: '2 menit lalu', unread: true },
   { id: 2, title: 'Feedback dosen', desc: 'Dosen Surya memberi komentar di proyek kamu', time: '1 jam lalu', unread: true },
-  { id: 3, title: 'Streak 7 hari! 🔥', desc: 'Selamat! Kamu sudah login 7 hari berturut-turut', time: '5 jam lalu', unread: false },
+  { id: 3, title: 'Streak 7 hari', desc: 'Kamu sudah login 7 hari berturut-turut.', time: '5 jam lalu', unread: false },
   { id: 4, title: 'Sesi kolaborasi', desc: 'Budi mengundang kamu ke sesi review', time: 'Kemarin', unread: false },
 ]
 
@@ -131,7 +131,7 @@ export default function Topbar() {
                 </div>
               ) : (
                 <div className="px-4 py-6 text-center">
-                  <div className="text-2xl mb-2">🔍</div>
+                  <Search className="w-6 h-6 text-ink-5 mx-auto mb-2" />
                   <p className="text-sm text-ink-4">Tidak ada hasil untuk "{searchQuery}"</p>
                 </div>
               )}
