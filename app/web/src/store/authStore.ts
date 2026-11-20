@@ -291,6 +291,7 @@ function mapAuthError(msg: string): string {
   if (msg.includes('Password should be at least')) return 'Password minimal 6 karakter.'
   if (msg.includes('rate limit')) return 'Terlalu banyak percobaan. Tunggu beberapa saat.'
   if (msg.includes('Email rate limit')) return 'Terlalu banyak email terkirim. Tunggu beberapa saat.'
+  if (msg.includes('sending confirmation')) return 'Gagal mengirim email konfirmasi. Supabase free tier terbatas 2 email/jam. Coba lagi nanti atau hubungi admin.'
   if (msg.includes('Database error')) return 'Gagal mendaftar. Database sedang bermasalah, coba lagi.'
   if (msg.includes('invalid')) return 'Format email tidak valid.'
   return msg
