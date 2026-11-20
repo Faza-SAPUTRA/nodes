@@ -660,6 +660,7 @@ export default function CanvasPage() {
             </AnimatePresence>
           </div>
           <div className="w-px h-5 bg-ink-7 mr-1" />
+          <div className="flex items-center" data-tour="canvas-tools">
           {tools.map((t) => (
             <button
               key={t.id}
@@ -678,6 +679,7 @@ export default function CanvasPage() {
               </div>
             </button>
           ))}
+          </div>
           <div className="w-px h-5 bg-ink-7 mx-1" />
           {/* Undo / Redo */}
           <button
@@ -735,7 +737,7 @@ export default function CanvasPage() {
 
       <div className="flex flex-1 overflow-hidden min-h-0">
         {/* ═══ Left sidebar: Projects ═══ */}
-        <div className={`${showSidebar ? 'w-56' : 'w-0'} flex-shrink-0 bg-white border-r border-ink-7 overflow-hidden transition-all duration-300`}>
+        <div className={`${showSidebar ? 'w-56' : 'w-0'} flex-shrink-0 bg-white border-r border-ink-7 overflow-hidden transition-all duration-300`} data-tour="canvas-projects">
           <div className="p-3">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-xs font-bold text-ink-5 uppercase tracking-wider">Proyek</h3>
@@ -770,6 +772,7 @@ export default function CanvasPage() {
         <div
           ref={canvasRef}
           className="flex-1 relative overflow-hidden select-none"
+          data-tour="canvas-area"
           style={{
             backgroundColor: '#f0f1f3',
             backgroundImage: 'radial-gradient(circle, #d4d7dd 1px, transparent 1px)',

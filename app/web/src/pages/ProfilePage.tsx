@@ -9,6 +9,7 @@ import clsx from 'clsx'
 import { useAuthStore } from '../store/authStore'
 import { useToast } from '../components/ui/Toast'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
+import { resetAllTours } from '../components/ui/OnboardingTour'
 import { supabase } from '../lib/supabase'
 
 /* ─── Types ─── */
@@ -593,6 +594,18 @@ function SettingsTab() {
           <option value="id">Bahasa Indonesia</option>
           <option value="en">English</option>
         </select>
+
+        <h3 className="text-[13px] font-bold mt-5 mb-3">Tour Panduan</h3>
+        <p className="text-[11px] text-ink-4 mb-2">Ulangi tour panduan untuk mengenal kembali fitur-fitur NODES.</p>
+        <button
+          onClick={() => {
+            resetAllTours()
+            success('Tour Direset', 'Tour panduan akan muncul kembali saat kamu membuka halaman terkait.')
+          }}
+          className="px-4 py-2 rounded-lg text-[11px] font-semibold text-teal-600 border border-teal-600/20 hover:bg-teal-50 transition-colors cursor-pointer"
+        >
+          Ulangi Tour
+        </button>
 
         <h3 className="text-[13px] font-bold mt-5 mb-3 text-red-500">Zona Bahaya</h3>
         <button

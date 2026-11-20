@@ -81,7 +81,7 @@ export default function Topbar() {
       </button>
 
       {/* Search */}
-      <div ref={searchRef} className="relative flex-1 max-w-md">
+      <div ref={searchRef} className="relative flex-1 max-w-md" data-tour="search">
         <div className="flex items-center gap-2 px-3 py-2 bg-ink-9 border border-ink-7 rounded-xl text-ink-4 transition-colors focus-within:border-teal-600 focus-within:bg-white">
           <Search className="w-4 h-4 flex-shrink-0" />
           <input

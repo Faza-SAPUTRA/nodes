@@ -62,7 +62,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-tour="welcome">
       {/* Welcome + Streak */}
       <Reveal>
         <section className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-2">
@@ -71,7 +71,7 @@ export default function DashboardPage() {
             <h1 className="text-3xl font-extrabold text-ink tracking-tight mt-1">{displayName().split(' ')[0]}</h1>
             <p className="text-sm text-ink-4 mt-1">Kamu punya <strong className="text-ink">8 sesi</strong> yang belum selesai. Lanjutkan belajar.</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4" data-tour="streak">
             <div className="relative w-[100px] h-[100px]">
               <svg viewBox="0 0 120 120" className="w-full h-full">
                 <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(13,148,136,.1)" strokeWidth="8" />
@@ -98,7 +98,7 @@ export default function DashboardPage() {
 
       {/* Continue card */}
       <Reveal delay={0.1}>
-        <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-ink via-ink-2 to-ink p-8 md:p-10">
+        <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-ink via-ink-2 to-ink p-8 md:p-10" data-tour="continue-card">
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="flex-1">
@@ -170,7 +170,7 @@ export default function DashboardPage() {
         </Reveal>
 
         {/* Modul Terbaru */}
-        <Reveal delay={0.2} className="p-6 bg-white border border-ink-7 rounded-2xl hover:shadow-lg hover:shadow-teal-600/5 transition-shadow">
+        <Reveal delay={0.2} className="p-6 bg-white border border-ink-7 rounded-2xl hover:shadow-lg hover:shadow-teal-600/5 transition-shadow" data-tour="modules-recent">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-bold text-ink">Modul Terbaru</h3>
             <Link to="/app/modul" className="text-xs font-medium text-teal-600 hover:underline cursor-pointer">Lihat Semua</Link>

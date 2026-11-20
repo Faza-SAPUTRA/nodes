@@ -5,10 +5,10 @@ import { useAuthStore } from '../../store/authStore'
 import clsx from 'clsx'
 
 const navItems = [
-  { to: '/app', icon: LayoutDashboard, label: 'Dashboard', tooltip: 'Dashboard' },
-  { to: '/app/modul', icon: BookOpen, label: 'Modul Belajar', tooltip: 'Modul Belajar' },
-  { to: '/app/kanvas', icon: Palette, label: 'Canvas Praktik', tooltip: 'Canvas' },
-  { to: '/app/kolaborasi', icon: Users, label: 'Kolaborasi', tooltip: 'Kolaborasi' },
+  { to: '/app', icon: LayoutDashboard, label: 'Dashboard', tooltip: 'Dashboard', tourId: undefined as string | undefined },
+  { to: '/app/modul', icon: BookOpen, label: 'Modul Belajar', tooltip: 'Modul Belajar', tourId: undefined as string | undefined },
+  { to: '/app/kanvas', icon: Palette, label: 'Canvas Praktik', tooltip: 'Canvas', tourId: 'sidebar-canvas' },
+  { to: '/app/kolaborasi', icon: Users, label: 'Kolaborasi', tooltip: 'Kolaborasi', tourId: 'sidebar-collab' },
 ]
 
 export default function Sidebar() {
@@ -71,6 +71,7 @@ export default function Sidebar() {
             <Link
               key={item.to}
               to={item.to}
+              {...(item.tourId ? { 'data-tour': item.tourId } : {})}
               className={clsx(
                 'group relative flex items-center gap-3 h-10 min-h-[40px] rounded-[10px] px-2 text-[0.8125rem] font-medium whitespace-nowrap transition-all duration-150 no-underline',
                 isActive
@@ -126,6 +127,7 @@ export default function Sidebar() {
         {/* Avatar */}
         <Link
           to="/app/profil"
+          data-tour="sidebar-profile"
           className="group flex items-center gap-2.5 px-2 py-2 rounded-[10px] hover:bg-ink-8 transition-colors whitespace-nowrap overflow-hidden no-underline"
         >
           <div className="w-8 h-8 rounded-[10px] bg-teal-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">

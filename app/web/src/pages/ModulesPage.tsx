@@ -54,7 +54,7 @@ export default function ModulesPage() {
 
       {/* Search */}
       <Reveal delay={0.05}>
-        <div className="relative max-w-md">
+        <div className="relative max-w-md" data-tour="modules-search">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-5" />
           <input
             type="text"
@@ -68,7 +68,7 @@ export default function ModulesPage() {
 
       {/* Filter tabs */}
       <Reveal delay={0.1}>
-        <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+        <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1" data-tour="modules-filter">
           {categories.map((cat) => (
             <button
               key={cat.id}
@@ -86,7 +86,7 @@ export default function ModulesPage() {
       </Reveal>
 
       {/* Module grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" data-tour="modules-grid">
         {filtered.map((m, i) => {
           const slug = m.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
           const isDone = m.status === 'done'
