@@ -70,7 +70,7 @@ export default function Topbar() {
   }
 
   return (
-    <header className="sticky top-0 z-[5] flex items-center justify-between gap-4 px-6 py-3 bg-white/80 backdrop-blur-xl border-b border-ink-7" role="banner">
+    <header className="sticky top-0 z-30 flex items-center justify-between gap-4 px-6 py-3 bg-white/80 backdrop-blur-xl border-b border-ink-7" role="banner">
       {/* Mobile menu toggle */}
       <button
         onClick={toggle}
