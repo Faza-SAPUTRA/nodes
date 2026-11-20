@@ -1,5 +1,5 @@
-import { Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, BookOpen, Palette, Users, ChevronRight } from 'lucide-react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { LayoutDashboard, BookOpen, Palette, Users, ChevronRight, LogOut } from 'lucide-react'
 import { useSidebarStore } from '../../store/sidebarStore'
 import { useAuthStore } from '../../store/authStore'
 import clsx from 'clsx'
@@ -16,7 +16,14 @@ export default function Sidebar() {
   const profile = useAuthStore((s) => s.profile)
   const displayName = useAuthStore((s) => s.displayName)
   const initials = useAuthStore((s) => s.initials)
+  const signOut = useAuthStore((s) => s.signOut)
   const location = useLocation()
+  const navigate = useNavigate()
+
+  async function handleLogout() {
+    await signOut()
+    navigate('/auth')
+  }
 
   return (
     <aside
@@ -139,6 +146,26 @@ export default function Sidebar() {
             </div>
           )}
         </Link>
+
+        {/* Logout */}
+        <button
+          onClick={handleLogout}
+          className={clsx(
+            'group relative flex items-center gap-2.5 h-9 min-h-[36px] rounded-[10px] text-ink-4 hover:text-red-500 hover:bg-red-50 transition-all duration-150 cursor-pointer mb-2',
+            expanded
+              ? 'w-full px-2.5'
+              : 'w-9 mx-auto justify-center'
+          )}
+          aria-label="Keluar"
+        >
+          <LogOut className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={1.8} />
+          {expanded && <span className="text-xs font-semibold">Keluar</span>}
+          {!expanded && (
+            <div className="absolute left-[calc(3.5rem+4px)] top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg bg-ink text-white text-[0.6875rem] font-semibold whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 shadow-lg z-20">
+              Keluar
+            </div>
+          )}
+        </button>
       </div>
     </aside>
   )
