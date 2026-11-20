@@ -113,12 +113,12 @@ export default function DashboardPage() {
                 </div>
                 <span className="text-sm font-bold text-teal-400">{ccPct}%</span>
               </div>
-              <Link to="/app/modul/design-system-ui-tokens" className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-ink text-sm font-semibold rounded-xl hover:bg-teal-50 transition-colors">
+              <Link to="/app/modul/design-system-ui-tokens" className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-ink text-sm font-semibold rounded-xl hover:bg-teal-50 transition-colors cursor-pointer">
                 Lanjutkan <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
             {/* Color wheel */}
-            <svg viewBox="0 0 200 200" className="w-32 h-32 md:w-40 md:h-40 animate-spin-slow opacity-80">
+            <svg viewBox="0 0 200 200" className="w-32 h-32 md:w-40 md:h-40 animate-spin-slow opacity-80" aria-hidden="true">
               <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(255,255,255,.08)" strokeWidth="16" />
               {[
                 { d: 'M100 20 A80 80 0 0 1 169.28 60', c: '#EF4444' },
@@ -173,7 +173,7 @@ export default function DashboardPage() {
         <Reveal delay={0.2} className="p-6 bg-white border border-ink-7 rounded-2xl hover:shadow-lg hover:shadow-teal-600/5 transition-shadow">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-bold text-ink">Modul Terbaru</h3>
-            <Link to="/app/modul" className="text-xs font-medium text-teal-600 hover:underline">Lihat Semua</Link>
+            <Link to="/app/modul" className="text-xs font-medium text-teal-600 hover:underline cursor-pointer">Lihat Semua</Link>
           </div>
           <div className="space-y-1">
             {modules.map((m, i) => (
@@ -236,7 +236,7 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
-          <Link to="/app/kolaborasi" className="flex items-center justify-center gap-2 py-2.5 w-full border border-ink-7 rounded-xl text-sm font-medium text-ink-3 hover:border-teal-600 hover:text-teal-600 transition-all">
+          <Link to="/app/kolaborasi" className="flex items-center justify-center gap-2 py-2.5 w-full border border-ink-7 rounded-xl text-sm font-medium text-ink-3 hover:border-teal-600 hover:text-teal-600 transition-all cursor-pointer">
             <UserPlus className="w-3.5 h-3.5" /> Mulai Kolaborasi
           </Link>
         </Reveal>

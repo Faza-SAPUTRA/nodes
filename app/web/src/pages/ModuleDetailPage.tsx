@@ -252,11 +252,11 @@ export default function ModuleDetailPage() {
   return (
     <div className="space-y-4">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-sm text-ink-5 flex-wrap">
-        <Link to="/app" className="hover:text-teal-600 transition-colors">Dashboard</Link>
-        <ChevronRight className="w-3.5 h-3.5" />
-        <Link to="/app/modul" className="hover:text-teal-600 transition-colors">Katalog Modul</Link>
-        <ChevronRight className="w-3.5 h-3.5" />
+      <nav className="flex items-center gap-1.5 text-sm text-ink-5 flex-wrap" aria-label="Breadcrumb">
+        <Link to="/app" className="hover:text-teal-600 transition-colors cursor-pointer">Dashboard</Link>
+        <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+        <Link to="/app/modul" className="hover:text-teal-600 transition-colors cursor-pointer">Katalog Modul</Link>
+        <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
         <span className="text-ink font-medium truncate">{title}</span>
       </nav>
 
@@ -363,7 +363,7 @@ export default function ModuleDetailPage() {
                   </div>
                   <button
                     onClick={handleMarkDone}
-                    className={`px-6 py-2.5 text-sm font-semibold rounded-xl transition-colors flex items-center gap-2 ${
+                    className={`px-6 py-2.5 text-sm font-semibold rounded-xl transition-colors flex items-center gap-2 cursor-pointer ${
                       activeSubData?.done
                         ? 'bg-teal-100 text-teal-700 hover:bg-teal-200'
                         : 'bg-teal-600 text-white hover:bg-teal-700'
@@ -390,7 +390,7 @@ export default function ModuleDetailPage() {
             <div className="flex justify-end mt-3">
               <button
                 onClick={handleSave}
-                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all ${
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl transition-all cursor-pointer ${
                   saved ? 'bg-teal-100 text-teal-700' : 'bg-ink text-white hover:bg-teal-600'
                 }`}
               >

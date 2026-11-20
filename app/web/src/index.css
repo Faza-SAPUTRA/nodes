@@ -74,3 +74,72 @@ body {
 .animate-marquee { animation: marquee 30s linear infinite; }
 .animate-spin-slow { animation: spin-slow 20s linear infinite; }
 .animate-float { animation: float 3s ease-in-out infinite; }
+
+/* ── WCAG: Focus visible indicators ── */
+:focus-visible {
+  outline: 2px solid var(--color-teal-600);
+  outline-offset: 2px;
+}
+
+/* ── WCAG: Interactive cursor ── */
+button,
+a,
+[role="button"],
+[role="tab"],
+[role="link"],
+[role="menuitem"],
+input[type="checkbox"],
+input[type="radio"],
+select,
+summary,
+label[for] {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+/* ── WCAG: Skip-to-content link ── */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: 9999;
+}
+.skip-link:focus {
+  position: fixed;
+  left: 16px;
+  top: 16px;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  padding: 12px 24px;
+  background: var(--color-teal-600);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.875rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  text-decoration: none;
+}
+
+/* ── WCAG: Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-pulse-dot,
+  .animate-marquee,
+  .animate-spin-slow,
+  .animate-float {
+    animation: none !important;
+  }
+}

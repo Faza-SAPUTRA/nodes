@@ -70,12 +70,12 @@ export default function Topbar() {
   }
 
   return (
-    <header className="sticky top-0 z-[5] flex items-center justify-between gap-4 px-6 py-3 bg-white/80 backdrop-blur-xl border-b border-ink-7">
+    <header className="sticky top-0 z-[5] flex items-center justify-between gap-4 px-6 py-3 bg-white/80 backdrop-blur-xl border-b border-ink-7" role="banner">
       {/* Mobile menu toggle */}
       <button
         onClick={toggle}
-        className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg hover:bg-ink-8 text-ink-4 transition-colors"
-        aria-label="Menu"
+        className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg hover:bg-ink-8 text-ink-4 transition-colors cursor-pointer"
+        aria-label="Buka menu navigasi"
       >
         <Menu className="w-5 h-5" />
       </button>
@@ -91,6 +91,8 @@ export default function Topbar() {
             onFocus={() => setSearchFocused(true)}
             placeholder="Cari modul, materi, atau proyek..."
             className="flex-1 bg-transparent border-none outline-none text-sm text-ink placeholder:text-ink-5"
+            aria-label="Cari modul, materi, atau proyek"
+            role="searchbox"
           />
           <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-white border border-ink-7 rounded text-[0.625rem] font-medium text-ink-5">
             ⌘K
@@ -112,7 +114,7 @@ export default function Topbar() {
                     <button
                       key={m.id}
                       onClick={() => handleSearchSelect(slugify(m.title))}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-ink-9 transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-ink-9 transition-colors cursor-pointer"
                     >
                       <div className="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center flex-shrink-0">
                         <BookOpen className="w-4 h-4" />
@@ -144,8 +146,10 @@ export default function Topbar() {
         <div ref={notifRef} className="relative">
           <button
             onClick={() => setShowNotif(!showNotif)}
-            className="relative flex items-center justify-center w-9 h-9 rounded-lg hover:bg-ink-8 text-ink-4 transition-colors"
-            aria-label="Notifikasi"
+            className="relative flex items-center justify-center w-9 h-9 rounded-lg hover:bg-ink-8 text-ink-4 transition-colors cursor-pointer"
+            aria-label={`Notifikasi${unreadCount > 0 ? `, ${unreadCount} belum dibaca` : ''}`}
+            aria-expanded={showNotif}
+            aria-haspopup="true"
           >
             <Bell className="w-[18px] h-[18px]" />
             {unreadCount > 0 && (
@@ -164,7 +168,7 @@ export default function Topbar() {
                 <div className="flex items-center justify-between px-4 py-3 border-b border-ink-7">
                   <h3 className="text-sm font-bold text-ink">Notifikasi</h3>
                   {unreadCount > 0 && (
-                    <button onClick={markAllRead} className="text-xs text-teal-600 font-medium hover:underline">
+                    <button onClick={markAllRead} className="text-xs text-teal-600 font-medium hover:underline cursor-pointer">
                       Tandai semua dibaca
                     </button>
                   )}

@@ -65,7 +65,7 @@ export default function ModulesPage() {
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`px-4 py-2 text-sm font-medium rounded-xl whitespace-nowrap transition-all ${
+              className={`px-4 py-2 text-sm font-medium rounded-xl whitespace-nowrap transition-all cursor-pointer ${
                 activeCategory === cat.id
                   ? 'bg-teal-600 text-white shadow-sm'
                   : 'bg-ink-9 text-ink-4 hover:bg-ink-8 hover:text-ink-3'

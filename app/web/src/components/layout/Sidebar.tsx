@@ -20,6 +20,8 @@ export default function Sidebar() {
 
   return (
     <aside
+      role="navigation"
+      aria-label="Menu navigasi utama"
       className={clsx(
         'fixed top-0 left-0 bottom-0 z-10 flex flex-col bg-white border-r border-ink-7 transition-all duration-300 ease-[cubic-bezier(.4,0,.2,1)] overflow-hidden',
         expanded ? 'w-60 shadow-[4px_0_24px_rgba(15,23,42,.04)]' : 'w-14'
@@ -97,6 +99,8 @@ export default function Sidebar() {
         {/* Toggle */}
         <button
           onClick={toggle}
+          aria-label={expanded ? 'Tutup sidebar' : 'Buka sidebar'}
+          aria-expanded={expanded}
           className={clsx(
             'flex items-center justify-center gap-2.5 h-9 min-h-[36px] rounded-[10px] text-ink-4 hover:text-teal-600 hover:bg-ink-8 transition-all duration-150 cursor-pointer',
             expanded

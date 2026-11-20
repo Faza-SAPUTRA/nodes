@@ -200,13 +200,14 @@ export default function ProfilePage() {
           >
             <button
               onClick={() => setActiveTab('settings')}
-              className="px-4 py-2 rounded-lg text-xs font-semibold bg-ink text-white hover:bg-ink-2 transition-colors"
+              className="px-4 py-2 rounded-lg text-xs font-semibold bg-ink text-white hover:bg-ink-2 transition-colors cursor-pointer"
             >
               Edit Profil
             </button>
             <button
               onClick={handleShare}
-              className="w-9 h-9 rounded-lg border border-ink-7 flex items-center justify-center text-ink-4 hover:border-teal-600 hover:text-teal-600 transition-colors"
+              className="w-9 h-9 rounded-lg border border-ink-7 flex items-center justify-center text-ink-4 hover:border-teal-600 hover:text-teal-600 transition-colors cursor-pointer"
+              aria-label="Bagikan profil"
             >
               <Share2 size={14} />
             </button>
@@ -246,7 +247,7 @@ export default function ProfilePage() {
             key={t.key}
             onClick={() => setActiveTab(t.key)}
             className={clsx(
-              'px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px',
+              'px-4 py-2.5 text-xs font-semibold border-b-2 transition-colors -mb-px cursor-pointer',
               activeTab === t.key ? 'text-teal-600 border-teal-600' : 'text-ink-4 border-transparent hover:text-ink'
             )}
           >
@@ -568,7 +569,7 @@ function SettingsTab() {
               className="w-full px-3 py-2 rounded-lg border border-ink-7 text-xs outline-none focus:border-teal-600 transition-colors resize-y"
             />
           </div>
-          <button onClick={handleSaveProfile} disabled={saving} className="px-5 py-2.5 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700 transition-colors disabled:opacity-70">
+          <button onClick={handleSaveProfile} disabled={saving} className="px-5 py-2.5 rounded-lg bg-teal-600 text-white text-xs font-semibold hover:bg-teal-700 transition-colors disabled:opacity-70 cursor-pointer">
             {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
           </button>
         </div>
@@ -596,7 +597,7 @@ function SettingsTab() {
         <h3 className="text-[13px] font-bold mt-5 mb-3 text-red-500">Zona Bahaya</h3>
         <button
           onClick={() => setShowDeleteConfirm(true)}
-          className="px-4 py-2 rounded-lg text-[11px] font-semibold text-red-500 border border-red-500/20 hover:bg-red-500/[.06] transition-colors"
+          className="px-4 py-2 rounded-lg text-[11px] font-semibold text-red-500 border border-red-500/20 hover:bg-red-500/[.06] transition-colors cursor-pointer"
         >
           Hapus Akun
         </button>

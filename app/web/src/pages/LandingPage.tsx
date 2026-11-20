@@ -90,7 +90,7 @@ function ParticleCanvas() {
     return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', resize) }
   }, [])
 
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0" />
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none z-0" aria-hidden="true" />
 }
 
 /* ── Counter ── */
@@ -159,23 +159,23 @@ export default function LandingPage() {
   return (
     <div className="bg-white text-ink-3 overflow-x-hidden">
       {/* ═══ NAVBAR ═══ */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-400 ${scrolled ? 'py-3.5 bg-white/85 backdrop-blur-2xl shadow-[0_1px_0_var(--color-ink-7)]' : 'py-6'} ${navHidden ? '-translate-y-full pointer-events-none' : ''}`}>
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-400 ${scrolled ? 'py-3.5 bg-white/85 backdrop-blur-2xl shadow-[0_1px_0_var(--color-ink-7)]' : 'py-6'} ${navHidden ? '-translate-y-full pointer-events-none' : ''}`} aria-label="Navigasi utama">
         <div className="max-w-[1280px] mx-auto px-[clamp(20px,4vw,80px)] flex items-center justify-between">
-          <Link to="/" className="text-2xl font-extrabold tracking-tighter text-ink hover:text-teal-600 transition-colors">
+          <Link to="/" className="text-2xl font-extrabold tracking-tighter text-ink hover:text-teal-600 transition-colors cursor-pointer" aria-label="NODES - halaman utama">
             nodes<span className="text-teal-600">.</span>
           </Link>
           <div className="hidden md:flex gap-2">
             {['Masalah', 'Fitur', 'Cara Kerja', 'Testimoni'].map((label, i) => (
-              <a key={i} href={`#${['challenge', 'bento', 'process', 'proof'][i]}`} className="relative px-3.5 py-2 text-[0.8125rem] font-medium text-ink-4 hover:text-ink transition-colors group">
+              <a key={i} href={`#${['challenge', 'bento', 'process', 'proof'][i]}`} className="relative px-3.5 py-2 text-[0.8125rem] font-medium text-ink-4 hover:text-ink transition-colors group cursor-pointer">
                 {label}
                 <span className="absolute bottom-1 left-3.5 right-3.5 h-[1.5px] bg-teal-600 scale-x-0 group-hover:scale-x-100 transition-transform origin-right group-hover:origin-left duration-350" />
               </a>
             ))}
           </div>
-          <Link to="/auth" className="hidden md:inline-flex px-6 py-2.5 text-[0.8125rem] font-semibold text-white bg-ink rounded-full hover:bg-teal-600 hover:scale-[1.04] transition-all">
+          <Link to="/auth" className="hidden md:inline-flex px-6 py-2.5 text-[0.8125rem] font-semibold text-white bg-ink rounded-full hover:bg-teal-600 hover:scale-[1.04] transition-all cursor-pointer">
             Mulai Belajar
           </Link>
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2" aria-label="Menu">
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 cursor-pointer" aria-label="Buka menu navigasi" aria-expanded={mobileMenuOpen}>
             <div className="w-5 flex flex-col gap-[5px]">
               <span className={`block h-[1.5px] bg-ink transition-all ${mobileMenuOpen ? 'rotate-45 translate-y-[6.5px]' : ''}`} />
               <span className={`block h-[1.5px] bg-ink transition-all ${mobileMenuOpen ? '-rotate-45 -translate-y-0' : ''}`} />
@@ -186,9 +186,9 @@ export default function LandingPage() {
         {mobileMenuOpen && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="md:hidden px-6 pb-4 pt-2 flex flex-col gap-2">
             {['Masalah', 'Fitur', 'Cara Kerja', 'Testimoni'].map((label, i) => (
-              <a key={i} href={`#${['challenge', 'bento', 'process', 'proof'][i]}`} onClick={() => setMobileMenuOpen(false)} className="py-2 text-sm text-ink-4 hover:text-ink">{label}</a>
+              <a key={i} href={`#${['challenge', 'bento', 'process', 'proof'][i]}`} onClick={() => setMobileMenuOpen(false)} className="py-2 text-sm text-ink-4 hover:text-ink cursor-pointer">{label}</a>
             ))}
-            <Link to="/auth" className="mt-2 py-2.5 text-center text-sm font-semibold text-white bg-ink rounded-xl">Mulai Belajar</Link>
+            <Link to="/auth" className="mt-2 py-2.5 text-center text-sm font-semibold text-white bg-ink rounded-xl cursor-pointer">Mulai Belajar</Link>
           </motion.div>
         )}
       </nav>
@@ -247,12 +247,12 @@ export default function LandingPage() {
             transition={{ duration: 0.8, delay: 0.75 }}
             className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 mb-[72px]"
           >
-            <Link to="/auth" className="group relative inline-flex items-center justify-center gap-2.5 px-8 py-4 text-[0.9375rem] font-semibold text-white bg-ink rounded-[14px] overflow-hidden hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(13,148,136,.25)] transition-all">
+            <Link to="/auth" className="group relative inline-flex items-center justify-center gap-2.5 px-8 py-4 text-[0.9375rem] font-semibold text-white bg-ink rounded-[14px] overflow-hidden hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(13,148,136,.25)] transition-all cursor-pointer">
               <span className="absolute inset-0 bg-teal-600 translate-y-full group-hover:translate-y-0 transition-transform duration-400 ease-[cubic-bezier(.16,1,.3,1)]" />
               <span className="relative z-[1]">Coba Sekarang — Gratis</span>
               <ArrowRight className="relative z-[1] w-[18px] h-[18px]" />
             </Link>
-            <a href="#bento" className="inline-flex items-center justify-center gap-2 px-7 py-4 text-[0.9375rem] font-medium text-ink-3 border-[1.5px] border-ink-6 rounded-[14px] hover:border-teal-600 hover:text-teal-600 transition-all">
+            <a href="#bento" className="inline-flex items-center justify-center gap-2 px-7 py-4 text-[0.9375rem] font-medium text-ink-3 border-[1.5px] border-ink-6 rounded-[14px] hover:border-teal-600 hover:text-teal-600 transition-all cursor-pointer">
               Eksplorasi Fitur
             </a>
           </motion.div>
@@ -423,10 +423,10 @@ export default function LandingPage() {
               Gabung dengan 500+ mahasiswa ITI yang sudah belajar UI/UX secara interaktif. Gratis, tanpa kartu kredit.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5">
-              <Link to="/auth" className="inline-flex items-center gap-2.5 px-9 py-4 text-[0.9375rem] font-semibold text-ink bg-white rounded-[14px] hover:-translate-y-[3px] hover:shadow-[0_12px_40px_rgba(255,255,255,.15)] transition-all">
+              <Link to="/auth" className="inline-flex items-center gap-2.5 px-9 py-4 text-[0.9375rem] font-semibold text-ink bg-white rounded-[14px] hover:-translate-y-[3px] hover:shadow-[0_12px_40px_rgba(255,255,255,.15)] transition-all cursor-pointer">
                 Mulai Sekarang <ArrowRight className="w-[18px] h-[18px]" />
               </Link>
-              <a href="mailto:nodes@iti.ac.id" className="inline-flex items-center gap-2 px-7 py-4 text-[0.9375rem] font-medium text-ink-5 border-[1.5px] border-ink-3 rounded-[14px] hover:border-teal-600 hover:text-teal-500 transition-all">
+              <a href="mailto:nodes@iti.ac.id" className="inline-flex items-center gap-2 px-7 py-4 text-[0.9375rem] font-medium text-ink-5 border-[1.5px] border-ink-3 rounded-[14px] hover:border-teal-600 hover:text-teal-500 transition-all cursor-pointer">
                 Hubungi Tim Kami
               </a>
             </div>
@@ -450,7 +450,7 @@ export default function LandingPage() {
               <div key={i}>
                 <h5 className="text-[0.6875rem] font-bold text-ink-5 uppercase tracking-widest mb-5">{col.title}</h5>
                 {col.links.map((link, j) => (
-                  <a key={j} href={link.href} className="block text-sm text-ink-4 py-1.5 hover:text-teal-500 transition-colors">{link.label}</a>
+                  <a key={j} href={link.href} className="block text-sm text-ink-4 py-1.5 hover:text-teal-500 transition-colors cursor-pointer">{link.label}</a>
                 ))}
               </div>
             ))}

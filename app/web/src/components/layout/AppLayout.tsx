@@ -9,8 +9,15 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* WCAG: Skip-to-content link */}
+      <a href="#main-content" className="skip-link">
+        Langsung ke konten utama
+      </a>
       <Sidebar />
       <main
+        id="main-content"
+        role="main"
+        tabIndex={-1}
         className={clsx(
           'transition-[margin-left] duration-300 ease-[cubic-bezier(.4,0,.2,1)] min-h-screen',
           expanded ? 'ml-60' : 'ml-14',
