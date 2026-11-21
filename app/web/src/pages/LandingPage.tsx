@@ -401,10 +401,10 @@ export default function LandingPage() {
             </blockquote>
           </Reveal>
           <Reveal delay={0.15} className="flex items-center gap-4 pl-6 sm:pl-10">
-            <div className="w-12 h-12 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold text-sm">AP</div>
+            <div className="w-12 h-12 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold text-sm">FS</div>
             <div>
-              <h4 className="text-[0.9375rem] font-bold text-ink">Andi Pratama</h4>
-              <span className="text-[0.8125rem] text-ink-5">Mahasiswa Teknik Informatika ITI — Semester 5</span>
+              <h4 className="text-[0.9375rem] font-bold text-ink">Faza Saputra</h4>
+              <span className="text-[0.8125rem] text-ink-5">Mahasiswa Teknik Informatika ITI — Pengembang NODES</span>
             </div>
           </Reveal>
         </div>
@@ -444,7 +444,7 @@ export default function LandingPage() {
             </div>
             {[
               { title: 'Platform', links: [{ label: 'Fitur', href: '#bento' }, { label: 'Cara Kerja', href: '#process' }, { label: 'Modul', href: '/app/modul' }, { label: 'Kurikulum', href: '#process' }] },
-              { title: 'Sumber Daya', links: [{ label: 'Dokumentasi', href: '#bento' }, { label: 'Tutorial', href: '#process' }, { label: 'Blog', href: '#proof' }, { label: 'FAQ', href: '#challenge' }] },
+              { title: 'Sumber Daya', links: [{ label: 'Panduan Mahasiswa', href: '#process' }, { label: 'Contoh Modul', href: '#bento' }, { label: 'Studi Kasus', href: '#proof' }, { label: 'Hubungi Kami', href: 'mailto:nodes@iti.ac.id' }] },
               { title: 'Kontak', links: [{ label: 'nodes@iti.ac.id', href: 'mailto:nodes@iti.ac.id' }, { label: 'Instagram', href: 'https://instagram.com/nodes.iti' }, { label: 'LinkedIn', href: 'https://linkedin.com/company/nodes-iti' }, { label: 'GitHub', href: 'https://github.com/Faza-SAPUTRA/nodes' }] },
             ].map((col, i) => (
               <div key={i}>

@@ -109,7 +109,6 @@ function AnimatedCount({ target }: { target: number }) {
 /* ─── Component ─── */
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<TabKey>('progress')
-  const [heatmapCells] = useState(() => generateHeatmap(progress.activities))
   const { success } = useToast()
   const profile = useAuthStore((s) => s.profile)
   const displayName = useAuthStore((s) => s.displayName)
@@ -117,6 +116,7 @@ export default function ProfilePage() {
 
   // Load dynamic progress data
   const progress = useMemo(() => loadProgress(), [])
+  const [heatmapCells] = useState(() => generateHeatmap(progress.activities))
   const totalStats = useMemo(() => getTotalProgress(progress, modulesData.length), [progress])
 
   // Dynamic stats
@@ -665,20 +665,24 @@ function SettingsTab() {
       <div className="bg-white rounded-xl border border-ink-7 p-5 hover:shadow-md transition-shadow">
         <h3 className="text-[13px] font-bold mb-3.5">Preferensi</h3>
 
-        <ToggleRow label="Mode Gelap" checked={darkMode} onChange={setDarkMode} />
-        <ToggleRow label="Notifikasi Email" checked={emailNotif} onChange={setEmailNotif} />
-        <ToggleRow label="Notifikasi Push" checked={pushNotif} onChange={setPushNotif} />
+        <ToggleRow label="Mode Gelap" checked={darkMode} onChange={setDarkMode} comingSoon />
+        <ToggleRow label="Notifikasi Email" checked={emailNotif} onChange={setEmailNotif} comingSoon />
+        <ToggleRow label="Notifikasi Push" checked={pushNotif} onChange={setPushNotif} comingSoon />
         <ToggleRow label="Profil Publik" checked={publicProfile} onChange={setPublicProfile} />
 
         <h3 className="text-[13px] font-bold mt-5 mb-3">Bahasa</h3>
-        <select
-          value={language}
-          onChange={(e) => setLanguage(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-ink-7 text-xs outline-none focus:border-teal-600 transition-colors appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2210%22%20height%3D%2210%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%20fill%3D%22none%22%20stroke%3D%22%2394A3B8%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_10px_center] pr-7 cursor-pointer"
-        >
-          <option value="id">Bahasa Indonesia</option>
-          <option value="en">English</option>
-        </select>
+        <div className="flex items-center gap-2">
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            disabled
+            className="w-full px-3 py-2 rounded-lg border border-ink-7 text-xs outline-none focus:border-teal-600 transition-colors appearance-none bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2210%22%20height%3D%2210%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22%20fill%3D%22none%22%20stroke%3D%22%2394A3B8%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_10px_center] pr-7 cursor-not-allowed opacity-60"
+          >
+            <option value="id">Bahasa Indonesia</option>
+            <option value="en">English</option>
+          </select>
+          <span className="text-[9px] text-ink-5 font-medium whitespace-nowrap">Segera Hadir</span>
+        </div>
 
         <h3 className="text-[13px] font-bold mt-5 mb-3">Tour Panduan</h3>
         <p className="text-[11px] text-ink-4 mb-2">Ulangi tour panduan untuk mengenal kembali fitur-fitur NODES.</p>
@@ -716,12 +720,15 @@ function SettingsTab() {
 }
 
 /* ─── Toggle Row ─── */
-function ToggleRow({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+function ToggleRow({ label, checked, onChange, comingSoon }: { label: string; checked: boolean; onChange: (v: boolean) => void; comingSoon?: boolean }) {
   return (
     <div className="flex items-center justify-between py-2 border-b border-ink-8 text-xs text-ink-4">
-      <span>{label}</span>
-      <label className="relative inline-block w-9 h-5 cursor-pointer">
-        <input type="checkbox" className="sr-only peer" checked={checked} onChange={() => onChange(!checked)} />
+      <span className="flex items-center gap-1.5">
+        {label}
+        {comingSoon && <span className="text-[9px] text-ink-5 font-medium">(Segera Hadir)</span>}
+      </span>
+      <label className={`relative inline-block w-9 h-5 ${comingSoon ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
+        <input type="checkbox" className="sr-only peer" checked={checked} disabled={comingSoon} onChange={() => onChange(!checked)} />
         <span className="absolute inset-0 rounded-full bg-ink-5 peer-checked:bg-teal-600 transition-colors" />
         <span className="absolute left-[3px] bottom-[3px] w-3.5 h-3.5 rounded-full bg-white transition-transform peer-checked:translate-x-4" />
       </label>
