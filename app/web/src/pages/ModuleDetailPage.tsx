@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight, Check, BookOpen, Clock, Award, ChevronDown, Save, Lightbulb, Lock } from 'lucide-react'
 import { modulesData } from '../data/modules'
 import { useToast } from '../components/ui/Toast'
+import { loadProgress, saveProgress, markSubBabComplete, addActivity } from '../store/progressStore'
 
 function slugify(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
@@ -164,9 +165,9 @@ const subBabContent: Record<string, { heading: string; body: React.ReactNode }> 
 }
 
 const defaultSubBabs = [
-  { id: 1, title: 'Apa itu Design System?', done: true },
-  { id: 2, title: 'Komponen UI Dasar', done: true },
-  { id: 3, title: 'Token & Variabel Desain', done: true },
+  { id: 1, title: 'Apa itu Design System?', done: false },
+  { id: 2, title: 'Komponen UI Dasar', done: false },
+  { id: 3, title: 'Token & Variabel Desain', done: false },
   { id: 4, title: 'Membangun Component Library', done: false },
   { id: 5, title: 'Dokumentasi & Handoff', done: false },
   { id: 6, title: 'Studi Kasus: Design System Nyata', done: false },
@@ -242,6 +243,15 @@ export default function ModuleDetailPage() {
     const currentSub = subBabs.find((s: typeof defaultSubBabs[0]) => s.id === activeSub)
     if (currentSub && !currentSub.done) {
       success('Sub-bab Selesai', `"${currentSub.title}" ditandai sebagai selesai.`)
+
+      // Sync to progressStore for dashboard/modules page
+      if (moduleData) {
+        let prog = loadProgress()
+        prog = markSubBabComplete(prog, moduleData.id, activeSub - 1, subBabs.length)
+        prog = addActivity(prog, `Menyelesaikan "${currentSub.title}" di ${title}`)
+        saveProgress(prog)
+      }
+
       // Auto advance to next incomplete sub-bab
       const nextSub = subBabs.find((s: typeof defaultSubBabs[0]) => s.id > activeSub && !s.done)
       if (nextSub) {

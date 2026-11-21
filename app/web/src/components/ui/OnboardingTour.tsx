@@ -504,11 +504,11 @@ export default function OnboardingTour() {
   // Calculate tooltip position
   const tooltipPos = currentStep
     ? getTooltipPosition(
-        targetRect || new DOMRect(0, 0, 0, 0),
-        currentStep.placement,
-        320,
-        200
-      )
+      targetRect || new DOMRect(0, 0, 0, 0),
+      currentStep.placement,
+      320,
+      200
+    )
     : { top: 0, left: 0 }
 
   return (
@@ -671,9 +671,8 @@ export default function OnboardingTour() {
                     {activeTour.steps.map((_, i) => (
                       <div
                         key={i}
-                        className={`h-1 rounded-full transition-all duration-300 ${
-                          i === step ? 'w-4 bg-teal-600' : i < step ? 'w-1.5 bg-teal-300' : 'w-1.5 bg-ink-7'
-                        }`}
+                        className={`h-1 rounded-full transition-all duration-300 ${i === step ? 'w-4 bg-teal-600' : i < step ? 'w-1.5 bg-teal-300' : 'w-1.5 bg-ink-7'
+                          }`}
                       />
                     ))}
                   </div>

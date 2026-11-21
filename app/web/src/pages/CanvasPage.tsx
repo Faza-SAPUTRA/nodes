@@ -46,7 +46,7 @@ const tools: { id: ToolId; icon: typeof MousePointer2; label: string; shortcut: 
   { id: 'pen', icon: Pen, label: 'Pen', shortcut: 'P' },
 ]
 
-const templateNames = ['Kosong', 'Wireframe', 'Mobile App']
+const templateNames = ['Kosong', 'Landing Page', 'Wireframe', 'Mobile App']
 
 let nextLayerId = 100
 
@@ -100,14 +100,10 @@ export default function CanvasPage() {
   const navigate = useNavigate()
 
   // Projects with their own layers
-  const [projects, setProjects] = useState<ProjectItem[]>([
-    { id: 1, name: 'Landing Page Redesign', date: '2 jam lalu', color: 'bg-teal-600', layers: getDefaultLayers() },
-    { id: 2, name: 'Wireframe Dashboard', date: 'Kemarin', color: 'bg-blue-500', layers: getWireframeLayers() },
-    { id: 3, name: 'Color Palette Study', date: '3 hari lalu', color: 'bg-purple-500', layers: getMobileAppLayers() },
-  ])
-  const [activeProject, setActiveProject] = useState(1)
+  const [projects, setProjects] = useState<ProjectItem[]>([])
+  const [activeProject, setActiveProject] = useState<number | null>(null)
   const [zoom, setZoom] = useState(100)
-  const [selectedLayer, setSelectedLayer] = useState<number | null>(1)
+  const [selectedLayer, setSelectedLayer] = useState<number | null>(null)
   const [showSidebar, setShowSidebar] = useState(true)
 
   // Get current project's layers
@@ -123,7 +119,7 @@ export default function CanvasPage() {
   }
 
   // Undo/Redo history
-  const [history, setHistory] = useState<Layer[][]>([getDefaultLayers()])
+  const [history, setHistory] = useState<Layer[][]>([[]])
   const [historyIndex, setHistoryIndex] = useState(0)
 
   function pushHistory(newLayers: Layer[]) {
@@ -259,7 +255,7 @@ export default function CanvasPage() {
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLayer, editingText, layers, historyIndex, history, penPoints])
 
   /* ─── Canvas mouse helpers ─── */
@@ -537,9 +533,14 @@ export default function CanvasPage() {
     const idx = layers.findIndex(l => l.id === selectedLayer)
     if (idx === -1) return
     const newIdx = dir === 'up' ? idx + 1 : idx - 1
-    if (newIdx < 0 || newIdx >= layers.length) return
+    if (newIdx < 0 || newIdx >= layers.length) {
+      info(dir === 'up' ? 'Sudah paling atas' : 'Sudah paling bawah', `Layer tidak bisa digeser lebih ${dir === 'up' ? 'ke depan' : 'ke belakang'}.`)
+      return
+    }
     const newLayers = [...layers]
-    ;[newLayers[idx], newLayers[newIdx]] = [newLayers[newIdx], newLayers[idx]]
+    const temp = newLayers[idx]
+    newLayers[idx] = newLayers[newIdx]
+    newLayers[newIdx] = temp
     setLayers(newLayers)
     pushHistory(newLayers)
   }
@@ -565,7 +566,7 @@ export default function CanvasPage() {
       return
     }
     const colors = ['bg-teal-600', 'bg-blue-500', 'bg-purple-500', 'bg-amber-500', 'bg-pink-500', 'bg-indigo-500']
-    const templateLayers = selectedTemplate === 1 ? getWireframeLayers() : selectedTemplate === 2 ? getMobileAppLayers() : []
+    const templateLayers = selectedTemplate === 1 ? getDefaultLayers() : selectedTemplate === 2 ? getWireframeLayers() : selectedTemplate === 3 ? getMobileAppLayers() : []
     const newProject: ProjectItem = {
       id: Date.now(),
       name: newProjectName.trim(),
@@ -585,8 +586,8 @@ export default function CanvasPage() {
   /* ─── Canvas cursor ─── */
   const canvasCursor = activeTool === 'hand' ? (isPanning ? 'grabbing' : 'grab')
     : activeTool === 'frame' || activeTool === 'text' ? 'crosshair'
-    : activeTool === 'pen' ? 'crosshair'
-    : isDragging ? 'move' : 'default'
+      : activeTool === 'pen' ? 'crosshair'
+        : isDragging ? 'move' : 'default'
 
   /* ─── Zoom with scroll ─── */
   function handleWheel(e: React.WheelEvent) {
@@ -661,33 +662,31 @@ export default function CanvasPage() {
           </div>
           <div className="w-px h-5 bg-ink-7 mr-1" />
           <div className="flex items-center" data-tour="canvas-tools">
-          {tools.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => {
-                setActiveTool(t.id)
-                if (t.id === 'pen' && penPoints.length > 1) finishPenPath()
-              }}
-              className={`group relative flex items-center justify-center w-9 h-9 rounded-lg transition-all ${
-                activeTool === t.id ? 'bg-teal-50 text-teal-600' : 'text-ink-4 hover:bg-ink-9 hover:text-ink-3'
-              }`}
-              title={`${t.label} (${t.shortcut})`}
-            >
-              <t.icon className="w-[18px] h-[18px]" strokeWidth={activeTool === t.id ? 2.2 : 1.8} />
-              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-ink text-white text-[0.5625rem] font-semibold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-                {t.label} <kbd className="ml-1 opacity-60">{t.shortcut}</kbd>
-              </div>
-            </button>
-          ))}
+            {tools.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => {
+                  setActiveTool(t.id)
+                  if (t.id === 'pen' && penPoints.length > 1) finishPenPath()
+                }}
+                className={`group relative flex items-center justify-center w-9 h-9 rounded-lg transition-all ${activeTool === t.id ? 'bg-teal-50 text-teal-600' : 'text-ink-4 hover:bg-ink-9 hover:text-ink-3'
+                  }`}
+                title={`${t.label} (${t.shortcut})`}
+              >
+                <t.icon className="w-[18px] h-[18px]" strokeWidth={activeTool === t.id ? 2.2 : 1.8} />
+                <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-ink text-white text-[0.5625rem] font-semibold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+                  {t.label} <kbd className="ml-1 opacity-60">{t.shortcut}</kbd>
+                </div>
+              </button>
+            ))}
           </div>
           <div className="w-px h-5 bg-ink-7 mx-1" />
           {/* Undo / Redo */}
           <button
             onClick={undo}
             disabled={!canUndo}
-            className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all ${
-              canUndo ? 'text-ink-4 hover:bg-ink-9 hover:text-ink' : 'text-ink-6 cursor-not-allowed'
-            }`}
+            className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all ${canUndo ? 'text-ink-4 hover:bg-ink-9 hover:text-ink' : 'text-ink-6 cursor-not-allowed'
+              }`}
             title="Undo (Ctrl+Z)"
           >
             <Undo2 className="w-4 h-4" />
@@ -695,9 +694,8 @@ export default function CanvasPage() {
           <button
             onClick={redo}
             disabled={!canRedo}
-            className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all ${
-              canRedo ? 'text-ink-4 hover:bg-ink-9 hover:text-ink' : 'text-ink-6 cursor-not-allowed'
-            }`}
+            className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all ${canRedo ? 'text-ink-4 hover:bg-ink-9 hover:text-ink' : 'text-ink-6 cursor-not-allowed'
+              }`}
             title="Redo (Ctrl+Shift+Z)"
           >
             <Redo2 className="w-4 h-4" />
@@ -750,9 +748,8 @@ export default function CanvasPage() {
                 <button
                   key={p.id}
                   onClick={() => switchProject(p.id)}
-                  className={`w-full flex items-center gap-2.5 p-2.5 rounded-xl text-left transition-all ${
-                    activeProject === p.id ? 'bg-teal-50 border border-teal-200' : 'hover:bg-ink-9'
-                  }`}
+                  className={`w-full flex items-center gap-2.5 p-2.5 rounded-xl text-left transition-all ${activeProject === p.id ? 'bg-teal-50 border border-teal-200' : 'hover:bg-ink-9'
+                    }`}
                 >
                   <div className={`w-8 h-8 rounded-lg ${p.color} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
                     {p.name[0]}
@@ -806,17 +803,36 @@ export default function CanvasPage() {
             <ChevronRight className={`w-4 h-4 transition-transform ${showSidebar ? 'rotate-180' : ''}`} />
           </button>
 
+          {/* Empty state when no projects */}
+          {!currentProject && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+              <div className="text-center max-w-sm">
+                <div className="w-16 h-16 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center mx-auto mb-4">
+                  <Layers className="w-8 h-8" />
+                </div>
+                <h3 className="text-lg font-bold text-ink mb-2">Belum ada proyek</h3>
+                <p className="text-sm text-ink-4 mb-6">Buat proyek pertamamu untuk mulai mendesain di Canvas Praktik.</p>
+                <button
+                  onClick={() => setShowNewModal(true)}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" /> Buat Proyek Pertama
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Drawing indicator while drawing */}
           {isDrawing && (
             <div className="absolute top-3 right-3 z-20 px-3 py-1.5 bg-teal-600 text-white text-xs font-semibold rounded-lg shadow-lg">
-              {activeTool === 'text' ? '✏️ Text' : '□ Frame'}: {Math.round(drawPreview?.w || 0)} × {Math.round(drawPreview?.h || 0)}
+              {activeTool === 'text' ? 'Text' : 'Frame'}: {Math.round(drawPreview?.w || 0)} × {Math.round(drawPreview?.h || 0)}
             </div>
           )}
 
           {/* Pen tool indicator */}
           {activeTool === 'pen' && penPoints.length > 0 && (
             <div className="absolute top-3 right-3 z-20 px-3 py-1.5 bg-purple-600 text-white text-xs font-semibold rounded-lg shadow-lg">
-              ✏️ Pen: {penPoints.length} titik — Klik untuk lanjut, tekan Enter/Esc untuk selesai
+              Pen: {penPoints.length} titik — Klik untuk lanjut, tekan Enter/Esc untuk selesai
             </div>
           )}
 
@@ -837,7 +853,7 @@ export default function CanvasPage() {
             />
 
             {/* Render layers */}
-            {layers.filter(l => l.visible).map(layer => {
+            {layers.filter(l => l.visible).map((layer, renderIndex) => {
               const isSelected = selectedLayer === layer.id
               const isEditing = editingText === layer.id
 
@@ -859,7 +875,7 @@ export default function CanvasPage() {
                       opacity: (layer.opacity ?? 100) / 100,
                       pointerEvents: activeTool === 'hand' ? 'none' : 'auto',
                       outline: isSelected ? '2px solid #0D9488' : undefined,
-                      zIndex: isSelected ? 50 : undefined,
+                      zIndex: isSelected ? 50 : renderIndex + 1,
                       cursor: activeTool === 'select' && !layer.locked ? 'pointer' : undefined,
                     }}
                     onMouseDown={(e) => {
@@ -897,7 +913,7 @@ export default function CanvasPage() {
                     pointerEvents: activeTool === 'hand' ? 'none' : 'auto',
                     outline: isSelected ? '2px solid #0D9488' : undefined,
                     outlineOffset: isSelected ? '0px' : undefined,
-                    zIndex: isSelected ? 50 : undefined,
+                    zIndex: isSelected ? 50 : renderIndex + 1,
                   }}
                   onMouseDown={(e) => {
                     if (activeTool !== 'select') return
@@ -1079,7 +1095,7 @@ export default function CanvasPage() {
                       pointerEvents: 'none',
                     }}
                   >
-                    <span className="px-1.5 py-0.5 bg-teal-600 text-white text-[9px] font-bold rounded shadow-sm">
+                    <span className="px-1.5 py-0.5 bg-teal-600 text-white text-[9px] font-bold rounded shadow-sm whitespace-nowrap">
                       {selectedLayerData.w} × {selectedLayerData.h}
                     </span>
                   </div>
@@ -1103,17 +1119,15 @@ export default function CanvasPage() {
               {[...layers].reverse().map((l) => (
                 <div
                   key={l.id}
-                  className={`flex items-center gap-1.5 p-1.5 rounded-lg text-xs transition-all group ${
-                    selectedLayer === l.id ? 'bg-teal-50 text-teal-700' : 'text-ink-4 hover:bg-ink-9'
-                  }`}
+                  className={`flex items-center gap-1.5 p-1.5 rounded-lg text-xs transition-all group ${selectedLayer === l.id ? 'bg-teal-50 text-teal-700' : 'text-ink-4 hover:bg-ink-9'
+                    }`}
                 >
                   <button
                     onClick={() => setSelectedLayer(l.id)}
                     className="flex items-center gap-1.5 flex-1 min-w-0 text-left"
                   >
-                    <div className={`w-3.5 h-3.5 rounded flex items-center justify-center flex-shrink-0 ${
-                      selectedLayer === l.id ? 'border border-teal-600 bg-teal-100' : 'border border-ink-6'
-                    }`}>
+                    <div className={`w-3.5 h-3.5 rounded flex items-center justify-center flex-shrink-0 ${selectedLayer === l.id ? 'border border-teal-600 bg-teal-100' : 'border border-ink-6'
+                      }`}>
                       {l.type === 'Text' && <Type className="w-2 h-2" />}
                       {l.type === 'Frame' && <Square className="w-2 h-2" />}
                       {l.type === 'Path' && <Pen className="w-2 h-2" />}
@@ -1271,9 +1285,8 @@ export default function CanvasPage() {
                 <div className="flex gap-1">
                   <button
                     onClick={() => toggleLayerLock(selectedLayer!)}
-                    className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium rounded-lg transition-colors ${
-                      selectedLayerData.locked ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-ink-4 bg-ink-9 hover:bg-ink-8'
-                    }`}
+                    className={`flex-1 flex items-center justify-center gap-1 py-1.5 text-[10px] font-medium rounded-lg transition-colors ${selectedLayerData.locked ? 'text-amber-600 bg-amber-50 hover:bg-amber-100' : 'text-ink-4 bg-ink-9 hover:bg-ink-8'
+                      }`}
                   >
                     {selectedLayerData.locked ? <><Lock className="w-3 h-3" /> Unlock</> : <><Unlock className="w-3 h-3" /> Lock</>}
                   </button>
@@ -1355,9 +1368,8 @@ export default function CanvasPage() {
                     value={newProjectName}
                     onChange={(e) => { setNewProjectName(e.target.value); setNameError('') }}
                     placeholder="Contoh: Wireframe Homepage"
-                    className={`w-full px-3 py-2.5 bg-ink-9 border rounded-xl text-sm outline-none focus:ring-2 transition-all ${
-                      nameError ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : 'border-ink-7 focus:border-teal-600 focus:ring-teal-600/20'
-                    }`}
+                    className={`w-full px-3 py-2.5 bg-ink-9 border rounded-xl text-sm outline-none focus:ring-2 transition-all ${nameError ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : 'border-ink-7 focus:border-teal-600 focus:ring-teal-600/20'
+                      }`}
                     autoFocus
                     onKeyDown={(e) => e.key === 'Enter' && handleCreateProject()}
                   />
@@ -1365,14 +1377,13 @@ export default function CanvasPage() {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-ink mb-2 block">Template</label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     {templateNames.map((t, i) => (
                       <button
                         key={t}
                         onClick={() => setSelectedTemplate(i)}
-                        className={`p-3 border rounded-xl text-xs font-medium text-center transition-all ${
-                          selectedTemplate === i ? 'border-teal-600 bg-teal-50 text-teal-700' : 'border-ink-7 text-ink-4 hover:border-ink-6'
-                        }`}
+                        className={`p-3 border rounded-xl text-xs font-medium text-center transition-all ${selectedTemplate === i ? 'border-teal-600 bg-teal-50 text-teal-700' : 'border-ink-7 text-ink-4 hover:border-ink-6'
+                          }`}
                       >
                         <div className={`w-full h-12 mb-2 rounded-lg ${selectedTemplate === i ? 'bg-teal-100' : 'bg-ink-8'}`} />
                         {t}

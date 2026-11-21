@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { motion, useInView } from 'framer-motion'
 import { Search, Check, Lock, Clock, BookOpen, Users, Building2, Pencil, Ruler, Palette, Type, ClipboardList, Settings, MousePointer2, Smartphone, FlaskConical, Handshake, Briefcase, Rocket, Trophy } from 'lucide-react'
 import { modulesData, categories } from '../data/modules'
+import { loadProgress, getModuleStatus, getModuleProgress } from '../store/progressStore'
 
 function Reveal({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   const ref = useRef(null)
@@ -35,6 +36,8 @@ const moduleIcons: Record<string, typeof BookOpen> = {
 export default function ModulesPage() {
   const [activeCategory, setActiveCategory] = useState('semua')
   const [search, setSearch] = useState('')
+
+  const progress = loadProgress()
 
   const filtered = modulesData.filter((m) => {
     const matchCat = activeCategory === 'semua' || m.category === activeCategory
@@ -89,11 +92,13 @@ export default function ModulesPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" data-tour="modules-grid">
         {filtered.map((m, i) => {
           const slug = m.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-          const isDone = m.status === 'done'
-          const isProgress = m.status === 'progress'
-          const isLocked = m.status === 'locked'
+          const status = getModuleStatus(progress, m.id, modulesData.length)
+          const moduleProgress = getModuleProgress(progress, m.id)
+          const isDone = status === 'done'
+          const isProgress = status === 'progress'
+          const isLocked = status === 'locked'
           const circumference = 2 * Math.PI * 20
-          const offset = circumference - (m.progress / 100) * circumference
+          const offset = circumference - (moduleProgress / 100) * circumference
 
           return (
             <Reveal key={m.id} delay={i * 0.05}>
@@ -131,7 +136,7 @@ export default function ModulesPage() {
                   <div>
                     <div className="text-[0.6875rem] text-ink-5 mb-1">{m.subs} sub-bab · {isDone ? 'Selesai' : isProgress ? 'Berlangsung' : 'Belum dimulai'}</div>
                     <div className="w-32 h-1.5 bg-ink-7 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full transition-all duration-500 ${isDone ? 'bg-teal-600' : isProgress ? 'bg-teal-500' : ''}`} style={{ width: `${m.progress}%` }} />
+                      <div className={`h-full rounded-full transition-all duration-500 ${isDone ? 'bg-teal-600' : isProgress ? 'bg-teal-500' : ''}`} style={{ width: `${moduleProgress}%` }} />
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -152,7 +157,8 @@ export default function ModulesPage() {
                   <span className={`px-3 py-1 text-[0.6875rem] font-semibold rounded-lg ${
                     isDone ? 'bg-teal-50 text-teal-600' :
                     isProgress ? 'bg-teal-600 text-white' :
-                    'bg-ink-8 text-ink-5'
+                    isLocked ? 'bg-ink-8 text-ink-5' :
+                    'bg-teal-50 text-teal-600'
                   }`}>
                     {isDone ? 'Review' : isProgress ? 'Lanjutkan' : isLocked ? 'Terkunci' : 'Mulai'}
                   </span>

@@ -9,12 +9,21 @@ function slugify(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 }
 
-const notifications = [
-  { id: 1, title: 'Modul baru tersedia', desc: 'Interaction Design sudah bisa diakses', time: '2 menit lalu', unread: true },
-  { id: 2, title: 'Feedback dosen', desc: 'Dosen Surya memberi komentar di proyek kamu', time: '1 jam lalu', unread: true },
-  { id: 3, title: 'Streak 7 hari', desc: 'Kamu sudah login 7 hari berturut-turut.', time: '5 jam lalu', unread: false },
-  { id: 4, title: 'Sesi kolaborasi', desc: 'Budi mengundang kamu ke sesi review', time: 'Kemarin', unread: false },
-]
+interface NotifItem {
+  id: number
+  title: string
+  desc: string
+  time: string
+  unread: boolean
+}
+
+function getInitialNotifications(): NotifItem[] {
+  try {
+    const saved = localStorage.getItem('nodes-notifications')
+    if (saved) return JSON.parse(saved)
+  } catch { /* ignore */ }
+  return []
+}
 
 export default function Topbar() {
   const toggle = useSidebarStore((s) => s.toggle)
@@ -22,7 +31,7 @@ export default function Topbar() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
   const [showNotif, setShowNotif] = useState(false)
-  const [notifItems, setNotifItems] = useState(notifications)
+  const [notifItems, setNotifItems] = useState<NotifItem[]>(getInitialNotifications)
   const notifRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLDivElement>(null)
 
@@ -66,7 +75,11 @@ export default function Topbar() {
   }
 
   function markAllRead() {
-    setNotifItems((prev) => prev.map((n) => ({ ...n, unread: false })))
+    setNotifItems((prev) => {
+      const updated = prev.map((n) => ({ ...n, unread: false }))
+      localStorage.setItem('nodes-notifications', JSON.stringify(updated))
+      return updated
+    })
   }
 
   return (
@@ -174,7 +187,13 @@ export default function Topbar() {
                   )}
                 </div>
                 <div className="max-h-[320px] overflow-y-auto">
-                  {notifItems.map((n) => (
+                  {notifItems.length === 0 ? (
+                    <div className="px-4 py-8 text-center">
+                      <Bell className="w-6 h-6 text-ink-5 mx-auto mb-2" />
+                      <p className="text-xs text-ink-4">Belum ada notifikasi.</p>
+                    </div>
+                  ) : (
+                  notifItems.map((n) => (
                     <div
                       key={n.id}
                       className={`px-4 py-3 hover:bg-ink-9 transition-colors border-b border-ink-8 last:border-0 ${
@@ -190,7 +209,8 @@ export default function Topbar() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  ))
+                  )}
                 </div>
               </motion.div>
             )}

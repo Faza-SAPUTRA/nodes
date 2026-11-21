@@ -50,34 +50,6 @@ const participants = [
   { name: 'Kamu', letter: 'AP', bg: '#0D9488', isYou: true },
 ]
 
-const initialChat: ChatMessage[] = [
-  { id: '0', author: '', avatar: '', avatarBg: '', text: 'Sesi review dimulai — 12 menit lalu', time: '', system: true },
-  { id: '1', author: 'Budi', avatar: 'B', avatarBg: '#7C3AED', text: 'Oke gua udah liat landing page nya. Overall bagus, cuma ada beberapa note.', time: '10 min' },
-  { id: '2', author: 'Sari', avatar: 'S', avatarBg: '#EC4899', text: 'Setuju sama Budi. Gua tambahin pin di headline buat responsive issue.', time: '8 min' },
-  { id: '3', author: 'Kamu', avatar: 'AP', avatarBg: '#0D9488', text: 'Noted! Feature cards spacing udah gua fix. Cek pin #3 ya.', time: '6 min', self: true },
-  { id: '4', author: 'Budi', avatar: 'B', avatarBg: '#7C3AED', text: 'Nice fix! Sekarang yang navbar CTA gimana? Mau ganti warna?', time: '3 min' },
-  { id: '5', author: 'Kamu', avatar: 'AP', avatarBg: '#0D9488', text: 'Iya gua ganti ke teal gradient. Bentar ya.', time: '1 min', self: true },
-]
-
-const initialPins: CommentPin[] = [
-  {
-    id: 1, x: '75%', y: '18%', author: 'Budi', avatarBg: '#7C3AED', letter: 'B', time: '2 min lalu',
-    text: 'CTA button "Get Started" kurang kontras sama background navbar. Coba pake warna yang lebih bold.',
-    replies: [{ author: 'Kamu', avatarBg: '#0D9488', letter: 'AP', time: '1 min lalu', text: 'Setuju, ganti ke teal gradient aja ya?' }],
-    resolved: false,
-  },
-  { id: 2, x: '35%', y: '42%', author: 'Sari', avatarBg: '#EC4899', letter: 'S', time: '5 min lalu', text: 'Headline font size terlalu besar di mobile. Kurangin ke 2.5rem buat responsive.', replies: [], resolved: false },
-  { id: 3, x: '50%', y: '85%', author: 'Kamu', avatarBg: '#0D9488', letter: 'AP', time: '8 min lalu', text: 'Feature cards spacing udah di-fix. Gap sekarang 24px.', replies: [], resolved: true },
-]
-
-const initialActivity: ActivityItem[] = [
-  { id: 1, author: 'Kamu', avatarBg: '#0D9488', letter: 'AP', text: 'resolved komentar #3', time: '8 min lalu' },
-  { id: 2, author: 'Sari', avatarBg: '#EC4899', letter: 'S', text: 'menambahkan pin #2', time: '5 min lalu' },
-  { id: 3, author: 'Budi', avatarBg: '#7C3AED', letter: 'B', text: 'menambahkan pin #1', time: '2 min lalu' },
-  { id: 4, author: 'Kamu', avatarBg: '#0D9488', letter: 'AP', text: 'membalas komentar #1', time: '1 min lalu' },
-  { id: 5, author: 'Budi', avatarBg: '#7C3AED', letter: 'B', text: 'mengirim pesan di chat', time: '3 min lalu' },
-]
-
 type DeviceMode = 'desktop' | 'tablet' | 'mobile'
 type PanelTab = 'chat' | 'activity' | 'votes'
 
@@ -101,7 +73,9 @@ export default function CollabPage() {
   const [panelTab, setPanelTab] = useState<PanelTab>('chat')
   const [showComments, setShowComments] = useState(true)
   const [activePin, setActivePin] = useState<number | null>(null)
-  const [chat, setChat] = useState<ChatMessage[]>(initialChat)
+  const [chat, setChat] = useState<ChatMessage[]>([
+    { id: '0', author: '', avatar: '', avatarBg: '', text: 'Sesi review dimulai — baru saja', time: '', system: true },
+  ])
   const [input, setInput] = useState('')
   const [showInvite, setShowInvite] = useState(false)
   const [inviteEmail, setInviteEmail] = useState('')
@@ -109,7 +83,7 @@ export default function CollabPage() {
   const [showPanel, setShowPanel] = useState(true)
 
   // Interactive pins
-  const [commentPins, setCommentPins] = useState<CommentPin[]>(initialPins)
+  const [commentPins, setCommentPins] = useState<CommentPin[]>([])
   const [isAddingPin, setIsAddingPin] = useState(false)
   const [newPinText, setNewPinText] = useState('')
   const [pendingPinPos, setPendingPinPos] = useState<{ x: string; y: string } | null>(null)
@@ -119,7 +93,7 @@ export default function CollabPage() {
   const [pinReplyText, setPinReplyText] = useState('')
 
   // Activity feed
-  const [activity, setActivity] = useState<ActivityItem[]>(initialActivity)
+  const [activity, setActivity] = useState<ActivityItem[]>([])
 
   const chatEndRef = useRef<HTMLDivElement>(null)
   const previewRef = useRef<HTMLDivElement>(null)
@@ -197,7 +171,7 @@ export default function CollabPage() {
     }
     setCommentPins(prev => [...prev, newPin])
     addActivity(`menambahkan pin #${newPin.id}`)
-    success('Pin Ditambahkan! 📌', `Komentar berhasil ditambahkan di preview.`)
+    success('Pin Ditambahkan', `Komentar berhasil ditambahkan di preview.`)
     setPendingPinPos(null)
     setNewPinText('')
     setIsAddingPin(false)
@@ -293,7 +267,7 @@ export default function CollabPage() {
       warning('Email Tidak Valid', 'Masukkan alamat email yang valid.')
       return
     }
-    success('Undangan Terkirim! 📩', `Undangan berhasil dikirim ke ${inviteEmail}`)
+    success('Undangan Terkirim', `Undangan berhasil dikirim ke ${inviteEmail}`)
     addActivity(`mengundang ${inviteEmail}`)
     setInviteEmail('')
   }
@@ -316,7 +290,7 @@ export default function CollabPage() {
             <h1 className="text-[15px] font-bold truncate">Review: Design System Components</h1>
             <div className="flex items-center gap-1.5 text-[11px] text-ink-4 mt-0.5 flex-wrap">
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold text-teal-600 bg-teal-600/[.06] border border-teal-600/15 whitespace-nowrap">
-                📖 Sesi 9 · Design System
+                Sesi 9 · Design System
               </span>
               <span className="text-ink-5">·</span>
               <span className="flex items-center gap-1">
@@ -443,14 +417,14 @@ export default function CollabPage() {
             {/* Adding pin indicator */}
             {isAddingPin && (
               <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30 px-3 py-1.5 bg-purple-600 text-white text-xs font-semibold rounded-lg shadow-lg animate-pulse">
-                📌 Klik di design preview untuk menaruh pin
+                Klik di design preview untuk menaruh pin
               </div>
             )}
 
             <motion.div
               ref={previewRef}
               className={clsx(
-                'w-full bg-white rounded-lg shadow-[0_4px_24px_rgba(0,0,0,.06),0_0_0_1px_rgba(0,0,0,.04)] overflow-hidden relative transition-all duration-400',
+                'w-full bg-white rounded-lg shadow-[0_4px_24px_rgba(0,0,0,.06),0_0_0_1px_rgba(0,0,0,.04)] relative transition-all duration-400',
                 deviceWidth,
                 isAddingPin && 'ring-2 ring-purple-400 ring-offset-2 cursor-crosshair'
               )}
@@ -466,7 +440,7 @@ export default function CollabPage() {
                 <div className="px-3.5 py-1.5 rounded-[5px] text-[10px] font-semibold bg-ink text-white">Get Started</div>
               </div>
               <div className="px-4 sm:px-8 py-10 sm:py-12 bg-gradient-to-br from-[#0F172A] to-[#1E293B] text-white text-center">
-                <div className="inline-block px-2.5 py-0.5 rounded-full text-[9px] font-semibold bg-teal-600/15 text-teal-300 mb-3.5">✨ New Release</div>
+                <div className="inline-block px-2.5 py-0.5 rounded-full text-[9px] font-semibold bg-teal-600/15 text-teal-300 mb-3.5">New Release</div>
                 <h2 className="text-xl sm:text-[2rem] font-extrabold leading-tight tracking-tight mb-2.5">Design systems<br />made simple</h2>
                 <p className="text-xs text-ink-4 max-w-[360px] mx-auto mb-5 leading-relaxed">Build consistent, beautiful interfaces faster with our comprehensive toolkit.</p>
                 <div className="flex justify-center gap-2">
@@ -526,9 +500,18 @@ export default function CollabPage() {
                           initial={{ opacity: 0, y: 4 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 4 }}
-                          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[280px] bg-white rounded-xl shadow-[0_8px_30px_rgba(0,0,0,.12)] z-20"
+                          className="absolute z-20"
+                          style={{
+                            bottom: 'calc(100% + 8px)',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            width: 280,
+                            // Keep popup within viewport
+                            maxWidth: 'calc(100vw - 32px)',
+                          }}
                           onClick={e => e.stopPropagation()}
                         >
+                          <div className="bg-white rounded-xl shadow-[0_8px_30px_rgba(0,0,0,.12)] border border-ink-7/50">
                           <div className="p-3">
                             {/* Pin header */}
                             <div className="flex items-center gap-1.5 mb-1.5">
@@ -601,6 +584,7 @@ export default function CollabPage() {
                               >
                                 <Trash2 size={10} />
                               </button>
+                            </div>
                             </div>
                           </div>
 
@@ -739,10 +723,10 @@ export default function CollabPage() {
                           isAddingPin ? 'bg-purple-100 text-purple-700' : 'text-ink-4 hover:bg-ink-8 hover:text-ink'
                         )}
                       >
-                        📌 Pin
+                        Pin
                       </button>
-                      <button className="text-[9px] px-2 py-0.5 rounded text-ink-4 hover:bg-ink-8 hover:text-ink transition-colors">📎 File</button>
-                      <button className="text-[9px] px-2 py-0.5 rounded text-ink-4 hover:bg-ink-8 hover:text-ink transition-colors">😊</button>
+                      <button className="text-[9px] px-2 py-0.5 rounded text-ink-4 hover:bg-ink-8 hover:text-ink transition-colors">File</button>
+                      <button className="text-[9px] px-2 py-0.5 rounded text-ink-4 hover:bg-ink-8 hover:text-ink transition-colors">Emoji</button>
                     </div>
                   </div>
                 </div>
