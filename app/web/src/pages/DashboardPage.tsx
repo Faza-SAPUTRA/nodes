@@ -181,7 +181,7 @@ export default function DashboardPage() {
       {/* Bento Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Progress */}
-        <Reveal delay={0.15} className="p-6 bg-white border border-ink-7 rounded-2xl hover:shadow-lg hover:shadow-teal-600/5 transition-shadow">
+        <Reveal delay={0.15} className="p-6 bg-white border border-ink-7 rounded-2xl hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-base font-bold text-ink">Progress Belajar</h3>
             <span className="text-xs text-ink-5">Semester ini</span>
@@ -212,7 +212,7 @@ export default function DashboardPage() {
         </Reveal>
 
         {/* Modul Terbaru */}
-        <Reveal delay={0.2} className="p-6 bg-white border border-ink-7 rounded-2xl hover:shadow-lg hover:shadow-teal-600/5 transition-shadow" data-tour="modules-recent">
+        <Reveal delay={0.2} className="p-6 bg-white border border-ink-7 rounded-2xl hover:shadow-md transition-shadow" data-tour="modules-recent">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-base font-bold text-ink">Modul Terbaru</h3>
             <Link to="/app/modul" className="text-xs font-medium text-teal-600 hover:underline cursor-pointer">Lihat Semua</Link>
@@ -243,13 +243,13 @@ export default function DashboardPage() {
         </Reveal>
 
         {/* Aktivitas */}
-        <Reveal delay={0.25} className="p-6 bg-white border border-ink-7 rounded-2xl hover:shadow-lg hover:shadow-teal-600/5 transition-shadow">
+        <Reveal delay={0.25} className="p-6 bg-white border border-ink-7 rounded-2xl hover:shadow-md transition-shadow">
           <h3 className="text-base font-bold text-ink mb-4">Aktivitas Terbaru</h3>
           {progress.activities.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <Inbox className="w-8 h-8 text-ink-6 mb-2" />
               <p className="text-sm text-ink-5">Belum ada aktivitas.</p>
-              <p className="text-xs text-ink-6 mt-1">Mulai belajar untuk melihat riwayat aktivitasmu di sini.</p>
+              <p className="text-xs text-ink-6 mt-1">Riwayat belajar akan muncul di sini.</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -270,7 +270,7 @@ export default function DashboardPage() {
         </Reveal>
 
         {/* Quick Links */}
-        <Reveal delay={0.3} className="p-6 bg-white border border-ink-7 rounded-2xl hover:shadow-lg hover:shadow-teal-600/5 transition-shadow">
+        <Reveal delay={0.3} className="p-6 bg-white border border-ink-7 rounded-2xl hover:shadow-md transition-shadow">
           <h3 className="text-base font-bold text-ink mb-4">Akses Cepat</h3>
           <div className="space-y-2">
             <Link to="/app/modul" className="flex items-center gap-3 p-3 rounded-xl border border-ink-7 hover:border-teal-600 hover:bg-teal-50/50 transition-all group cursor-pointer">

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -11,6 +11,8 @@ import { useToast } from '../components/ui/Toast'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import { resetAllTours } from '../components/ui/OnboardingTour'
 import { supabase } from '../lib/supabase'
+import { loadProgress, getTotalProgress, getModuleProgress, getModuleStatus } from '../store/progressStore'
+import { modulesData } from '../data/modules'
 
 /* ─── Types ─── */
 type TabKey = 'progress' | 'badges' | 'projects' | 'settings'
@@ -45,53 +47,6 @@ interface TimelineEvent {
   desc: string
   time: string
 }
-
-/* ─── Data ─── */
-const stats = [
-  { label: 'Total XP', valueKey: 'xp' as const, fallback: 1247, icon: Activity, color: '#0D9488', bg: 'rgba(13,148,136,.1)' },
-  { label: 'Streak Hari', valueKey: 'streak_days' as const, fallback: 14, icon: Star, color: '#7C3AED', bg: 'rgba(124,58,237,.1)' },
-  { label: 'Hari Aktif', valueKey: 'active_days' as const, fallback: 23, icon: Calendar, color: '#EC4899', bg: 'rgba(236,72,153,.1)' },
-  { label: 'Badges', valueKey: null, fallback: 8, icon: Trophy, color: '#F59E0B', bg: 'rgba(245,158,11,.1)' },
-]
-
-const progressItems: ProgressItem[] = [
-  { name: 'Pengantar UX & Analisis Pengguna', pct: 100, color: '#22C55E' },
-  { name: 'Information Architecture & Wireframe', pct: 100, color: '#22C55E' },
-  { name: 'Color Theory & Typography', pct: 100, color: '#22C55E' },
-  { name: 'Visual Hierarchy & Layout', pct: 100, color: '#22C55E' },
-  { name: 'Design System', pct: 60, color: '#F59E0B' },
-  { name: 'Prototyping & Usability', pct: 0, color: '#94A3B8' },
-]
-
-const badges: Badge[] = [
-  { emoji: 'CM', name: 'Color Master', desc: 'Selesaikan modul Teori Warna', earned: true, date: 'Hari ini' },
-  { emoji: 'GG', name: 'Grid Guru', desc: 'Kuasai layout & grid system', earned: true, date: '5 hari lalu' },
-  { emoji: 'S7', name: 'Streak 7', desc: 'Login 7 hari berturut-turut', earned: true, date: '1 minggu lalu' },
-  { emoji: 'CB', name: 'Collaborator', desc: 'Ikut 3 sesi kolaborasi', earned: true, date: '2 minggu lalu' },
-  { emoji: 'QL', name: 'Quick Learner', desc: 'Selesaikan 3 modul dalam 1 minggu', earned: true, date: '2 minggu lalu' },
-  { emoji: 'FC', name: 'First Component', desc: 'Buat komponen pertama di canvas', earned: true, date: '3 minggu lalu' },
-  { emoji: 'NT', name: 'Note Taker', desc: 'Tambahkan 10 catatan di modul', earned: true, date: '3 minggu lalu' },
-  { emoji: 'FS', name: 'First Steps', desc: 'Selesaikan modul pertama', earned: true, date: '1 bulan lalu' },
-  { emoji: 'DC', name: 'Design Champion', desc: 'Selesaikan semua modul', earned: false },
-  { emoji: 'S3', name: 'Streak 30', desc: 'Login 30 hari berturut-turut', earned: false },
-  { emoji: 'MT', name: 'Mentor', desc: 'Bantu 5 orang di kolaborasi', earned: false },
-  { emoji: 'PF', name: 'Perfectionist', desc: 'Skor 100 di semua quiz', earned: false },
-]
-
-const projects: Project[] = [
-  { title: 'Design System Components', desc: 'Tugas praktik Sesi 9 — Color tokens & typography', date: 'Hari ini', layers: 5, gradient: 'linear-gradient(135deg,#0F172A,#1E293B)', type: 'Design System' },
-  { title: 'Wireframe E-Commerce', desc: 'Tugas praktik Sesi 4 — Low-fidelity wireframe', date: '8 Okt 2026', layers: 8, gradient: 'linear-gradient(135deg,#ECFDF5,#D1FAE5)', type: 'Wireframe', typeColor: '#064E3B' },
-  { title: 'Visual Hierarchy Page', desc: 'Kolaborasi Sesi 7 — Layout & composition', date: '3 Okt 2026', layers: 12, gradient: 'linear-gradient(135deg,#FDF2F8,#FCE7F3)', type: 'Layout', typeColor: '#9D174D' },
-]
-
-const timeline: TimelineEvent[] = [
-  { color: '#0D9488', title: 'Mulai Sesi 9: Design System', desc: 'Membuat color tokens dan typography scale di canvas', time: 'Hari ini, 14:30' },
-  { color: '#7C3AED', title: 'Menyelesaikan Sesi 8: UI Components', desc: 'Badge "Component Builder" berhasil didapatkan.', time: 'Kemarin, 16:20' },
-  { color: '#EC4899', title: 'Review Kolaborasi: Visual Hierarchy', desc: 'Memberikan 3 komentar pada desain Budi (Sesi 7)', time: '2 hari lalu, 11:45' },
-  { color: '#F59E0B', title: 'Quiz: Color Theory & Accessibility', desc: 'Skor 90/100 — Hasil sangat baik.', time: '3 hari lalu, 09:15' },
-]
-
-const tags = ['Visual Design', 'Layout', 'Components']
 
 /* ─── Heatmap helper ─── */
 const heatColors = ['#E2E8F0', 'rgba(13,148,136,.2)', 'rgba(13,148,136,.4)', 'rgba(13,148,136,.7)', '#0D9488']
@@ -142,6 +97,107 @@ export default function ProfilePage() {
   const displayName = useAuthStore((s) => s.displayName)
   const initials = useAuthStore((s) => s.initials)
 
+  // Load dynamic progress data
+  const progress = useMemo(() => loadProgress(), [])
+  const totalStats = useMemo(() => getTotalProgress(progress, modulesData.length), [progress])
+
+  // Dynamic stats
+  const xp = totalStats.done * 100 + totalStats.inProgress * 30
+  const streakDays = progress.streak.current
+  const activeDays = progress.streak.weekDays.filter(Boolean).length
+  
+  // Dynamic progress items — first 6 modules with real progress
+  const dynamicProgressItems: ProgressItem[] = useMemo(() => {
+    return modulesData.slice(0, 6).map(m => {
+      const pct = getModuleProgress(progress, m.id)
+      return {
+        name: m.title,
+        pct,
+        color: pct >= 100 ? '#22C55E' : pct > 0 ? '#F59E0B' : '#94A3B8',
+      }
+    })
+  }, [progress])
+
+  // Dynamic badges
+  const dynamicBadges: Badge[] = useMemo(() => {
+    const mod1Done = getModuleStatus(progress, 1, modulesData.length) === 'done'
+    const mod5Done = getModuleStatus(progress, 5, modulesData.length) === 'done'
+    const mod6Done = getModuleStatus(progress, 6, modulesData.length) === 'done'
+    const hasNotes = (() => {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key?.startsWith('nodes-notes-') && localStorage.getItem(key)?.trim()) return true
+      }
+      return false
+    })()
+
+    return [
+      { emoji: 'FS', name: 'First Steps', desc: 'Selesaikan modul pertama', earned: mod1Done, date: mod1Done ? 'Tercapai' : undefined },
+      { emoji: 'S7', name: 'Streak 7', desc: 'Login 7 hari berturut-turut', earned: streakDays >= 7, date: streakDays >= 7 ? 'Tercapai' : undefined },
+      { emoji: 'QL', name: 'Quick Learner', desc: 'Selesaikan 3 modul dalam 1 minggu', earned: totalStats.done >= 3, date: totalStats.done >= 3 ? 'Tercapai' : undefined },
+      { emoji: 'CM', name: 'Color Master', desc: 'Selesaikan modul Teori Warna', earned: mod6Done, date: mod6Done ? 'Tercapai' : undefined },
+      { emoji: 'GG', name: 'Grid Guru', desc: 'Kuasai layout & grid system', earned: mod5Done, date: mod5Done ? 'Tercapai' : undefined },
+      { emoji: 'NT', name: 'Note Taker', desc: 'Tambahkan catatan di modul', earned: hasNotes, date: hasNotes ? 'Tercapai' : undefined },
+      { emoji: 'FC', name: 'First Component', desc: 'Buat komponen pertama di canvas', earned: false },
+      { emoji: 'CB', name: 'Collaborator', desc: 'Ikut 3 sesi kolaborasi', earned: false },
+      { emoji: 'DC', name: 'Design Champion', desc: 'Selesaikan semua modul', earned: totalStats.done >= modulesData.length, date: totalStats.done >= modulesData.length ? 'Tercapai' : undefined },
+      { emoji: 'S3', name: 'Streak 30', desc: 'Login 30 hari berturut-turut', earned: streakDays >= 30, date: streakDays >= 30 ? 'Tercapai' : undefined },
+      { emoji: 'MT', name: 'Mentor', desc: 'Bantu 5 orang di kolaborasi', earned: false },
+      { emoji: 'PF', name: 'Perfectionist', desc: 'Skor 100 di semua quiz', earned: false },
+    ]
+  }, [progress, totalStats, streakDays])
+
+  const earnedBadgeCount = dynamicBadges.filter(b => b.earned).length
+
+  // Dynamic projects from localStorage (canvas persistence)
+  const dynamicProjects: Project[] = useMemo(() => {
+    try {
+      const saved = localStorage.getItem('nodes-canvas-projects')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        return parsed.map((p: { name: string; date: string; layers: unknown[]; color: string }) => ({
+          title: p.name,
+          desc: `${p.layers.length} layers`,
+          date: p.date,
+          layers: p.layers.length,
+          gradient: 'linear-gradient(135deg,#0F172A,#1E293B)',
+          type: 'Canvas',
+        }))
+      }
+    } catch { /* ignore */ }
+    return []
+  }, [])
+
+  // Dynamic timeline from progressStore activities
+  const dynamicTimeline: TimelineEvent[] = useMemo(() => {
+    const colors = ['#0D9488', '#7C3AED', '#EC4899', '#F59E0B']
+    return progress.activities.slice(0, 6).map((a, i) => ({
+      color: colors[i % colors.length],
+      title: a.text,
+      desc: '',
+      time: a.time,
+    }))
+  }, [progress])
+
+  // Dynamic tags from completed modules
+  const dynamicTags: string[] = useMemo(() => {
+    const tagSet = new Set<string>()
+    modulesData.forEach(m => {
+      const status = getModuleStatus(progress, m.id, modulesData.length)
+      if (status === 'done' || status === 'progress') {
+        m.tags.forEach(t => tagSet.add(t))
+      }
+    })
+    return Array.from(tagSet).slice(0, 4)
+  }, [progress])
+
+  const statItems = [
+    { label: 'Total XP', value: xp, icon: Activity, color: '#0D9488', bg: 'rgba(13,148,136,.1)' },
+    { label: 'Streak Hari', value: streakDays, icon: Star, color: '#7C3AED', bg: 'rgba(124,58,237,.1)' },
+    { label: 'Hari Aktif', value: activeDays, icon: Calendar, color: '#EC4899', bg: 'rgba(236,72,153,.1)' },
+    { label: 'Badges', value: earnedBadgeCount, icon: Trophy, color: '#F59E0B', bg: 'rgba(245,158,11,.1)' },
+  ]
+
   const tabItems: { key: TabKey; label: string }[] = [
     { key: 'progress', label: 'Progres' },
     { key: 'badges', label: 'Badges' },
@@ -181,14 +237,16 @@ export default function ProfilePage() {
             transition={{ delay: 0.1, duration: 0.35 }}
             className="flex-1 min-w-0 text-center sm:text-left"
           >
-            <h1 className="text-2xl font-extrabold tracking-tight">{displayName()}</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{displayName()}</h1>
             <p className="text-xs text-ink-4 mt-1 leading-relaxed">
               {profile?.bio || 'UI/UX Design Enthusiast · Mahasiswa Informatika ITI · Semester 5 · Belajar UI/UX di NODES'}
             </p>
             <div className="flex gap-1.5 mt-2 flex-wrap justify-center sm:justify-start">
-              {tags.map(t => (
+              {dynamicTags.length > 0 ? dynamicTags.map(t => (
                 <span key={t} className="px-2.5 py-0.5 rounded-full text-[9px] font-semibold bg-teal-600/[.08] text-teal-600">{t}</span>
-              ))}
+              )) : (
+                <span className="px-2.5 py-0.5 rounded-full text-[9px] font-semibold bg-ink-8 text-ink-4">Mulai belajar untuk mendapat tag</span>
+              )}
             </div>
           </motion.div>
 
@@ -218,9 +276,8 @@ export default function ProfilePage() {
 
       {/* ─── Stats Strip ─── */}
       <section className="grid grid-cols-2 sm:grid-cols-4 gap-3 px-4 sm:px-8 pb-5 max-w-[1024px] mx-auto">
-        {stats.map((s, i) => {
+        {statItems.map((s, i) => {
           const Icon = s.icon
-          const val = s.valueKey && profile ? (profile as Record<string, unknown>)[s.valueKey] as number : s.fallback
           return (
             <motion.div
               key={s.label}
@@ -233,7 +290,7 @@ export default function ProfilePage() {
                 <Icon size={18} />
               </div>
               <div className="flex flex-col">
-                <span className="text-xl font-extrabold tracking-tight"><AnimatedCount target={val ?? s.fallback} /></span>
+                <span className="text-xl font-bold tracking-tight"><AnimatedCount target={s.value} /></span>
                 <span className="text-[10px] text-ink-4 font-medium mt-0.5">{s.label}</span>
               </div>
             </motion.div>
@@ -260,9 +317,9 @@ export default function ProfilePage() {
       {/* ─── Tab Content ─── */}
       <div className="px-4 sm:px-8 pb-8 max-w-[1024px] mx-auto">
         <AnimatePresence mode="wait">
-          {activeTab === 'progress' && <ProgressTab key="progress" items={progressItems} heatmap={heatmapCells} timeline={timeline} />}
-          {activeTab === 'badges' && <BadgesTab key="badges" badges={badges} />}
-          {activeTab === 'projects' && <ProjectsTab key="projects" projects={projects} />}
+          {activeTab === 'progress' && <ProgressTab key="progress" items={dynamicProgressItems} heatmap={heatmapCells} timeline={dynamicTimeline} />}
+          {activeTab === 'badges' && <BadgesTab key="badges" badges={dynamicBadges} />}
+          {activeTab === 'projects' && <ProjectsTab key="projects" projects={dynamicProjects} />}
           {activeTab === 'settings' && <SettingsTab key="settings" />}
         </AnimatePresence>
       </div>
@@ -332,6 +389,9 @@ function ProgressTab({ items, heatmap, timeline }: { items: ProgressItem[]; heat
       {/* Timeline */}
       <div className="bg-white rounded-xl border border-ink-7 p-5 hover:shadow-md transition-shadow">
         <h3 className="text-[13px] font-bold mb-3.5">Aktivitas Terakhir</h3>
+        {timeline.length === 0 ? (
+          <p className="text-xs text-ink-4 py-4 text-center">Belum ada aktivitas. Mulai belajar untuk melihat riwayat di sini.</p>
+        ) : (
         <div className="relative pl-5 flex flex-col gap-4">
           <div className="absolute left-[5px] top-2 bottom-2 w-[1.5px] bg-ink-7" />
           {timeline.map((ev, i) => (
@@ -349,6 +409,7 @@ function ProgressTab({ items, heatmap, timeline }: { items: ProgressItem[]; heat
             </motion.div>
           ))}
         </div>
+        )}
       </div>
     </motion.div>
   )
@@ -376,7 +437,7 @@ function BadgesTab({ badges }: { badges: Badge[] }) {
             b.earned ? 'border-teal-600 bg-teal-600/[.04]' : 'opacity-50 grayscale-[60%] border-ink-7'
           )}
         >
-          <div className="w-10 h-10 mx-auto mb-1.5 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center text-white text-xs font-extrabold tracking-tight">{b.emoji}</div>
+          <div className="w-10 h-10 mx-auto mb-1.5 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center text-white text-xs font-bold tracking-tight">{b.emoji}</div>
           <h4 className="text-xs font-bold mb-0.5">{b.name}</h4>
           <p className="text-[9px] text-ink-4 leading-snug">{b.desc}</p>
           {b.earned ? (

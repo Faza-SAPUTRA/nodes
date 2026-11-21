@@ -23,7 +23,7 @@ export default function NotFoundPage() {
           </div>
         </div>
 
-        <h1 className="text-2xl font-extrabold text-ink tracking-tight mb-3">
+        <h1 className="text-2xl font-bold text-ink tracking-tight mb-3">
           Halaman Tidak Ditemukan
         </h1>
         <p className="text-sm text-ink-4 leading-relaxed mb-8">

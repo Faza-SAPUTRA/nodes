@@ -67,7 +67,7 @@ export default function EmailConfirmedPage() {
               Email Terverifikasi
             </div>
 
-            <h1 className="text-2xl font-extrabold text-ink tracking-tight mb-3">
+            <h1 className="text-2xl font-bold text-ink tracking-tight mb-3">
               Email Berhasil Dikonfirmasi!
             </h1>
 

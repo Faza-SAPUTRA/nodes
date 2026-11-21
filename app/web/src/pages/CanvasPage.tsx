@@ -49,6 +49,7 @@ const tools: { id: ToolId; icon: typeof MousePointer2; label: string; shortcut: 
 const templateNames = ['Kosong', 'Landing Page', 'Wireframe', 'Mobile App']
 
 let nextLayerId = 100
+const CANVAS_STORAGE_KEY = 'nodes-canvas-projects'
 
 function getDefaultLayers(): Layer[] {
   return [
@@ -99,8 +100,22 @@ export default function CanvasPage() {
   const [showNavMenu, setShowNavMenu] = useState(false)
   const navigate = useNavigate()
 
-  // Projects with their own layers
-  const [projects, setProjects] = useState<ProjectItem[]>([])
+  // Projects with their own layers — persisted in localStorage
+  const [projects, setProjects] = useState<ProjectItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(CANVAS_STORAGE_KEY)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        for (const p of parsed) {
+          for (const l of p.layers) {
+            if (l.id >= nextLayerId) nextLayerId = l.id + 1
+          }
+        }
+        return parsed
+      }
+    } catch { /* ignore */ }
+    return []
+  })
   const [activeProject, setActiveProject] = useState<number | null>(null)
   const [zoom, setZoom] = useState(100)
   const [selectedLayer, setSelectedLayer] = useState<number | null>(null)
@@ -178,6 +193,11 @@ export default function CanvasPage() {
   const { success, warning, info } = useToast()
 
   const selectedLayerData = selectedLayer !== null ? layers.find(l => l.id === selectedLayer) : null
+
+  /* ─── Persist projects to localStorage ─── */
+  useEffect(() => {
+    localStorage.setItem(CANVAS_STORAGE_KEY, JSON.stringify(projects))
+  }, [projects])
 
   /* ─── Center artboard on mount ─── */
   useEffect(() => {
