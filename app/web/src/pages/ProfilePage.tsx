@@ -50,15 +50,33 @@ interface TimelineEvent {
 
 /* ─── Heatmap helper ─── */
 const heatColors = ['#E2E8F0', 'rgba(13,148,136,.2)', 'rgba(13,148,136,.4)', 'rgba(13,148,136,.7)', '#0D9488']
-const days = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']
+const dayLabels = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']
 
-function generateHeatmap() {
-  const cells: { level: number; tooltip: string }[] = []
-  for (let i = 0; i < 84; i++) {
-    const level = Math.random() < 0.3 ? 0 : Math.floor(Math.random() * 5)
-    const week = Math.floor(i / 7) + 1
-    const day = days[i % 7]
-    cells.push({ level, tooltip: `${day}, Minggu ${week}: ${level === 0 ? 'Tidak aktif' : level + ' aktivitas'}` })
+function generateHeatmap(activities: { time: string }[]): { level: number; tooltip: string; date: string }[] {
+  // Build a map of activity counts per date from real data
+  const countMap = new Map<string, number>()
+  const today = new Date().toISOString().split('T')[0]
+  // Each activity approximated to today since times are relative ("Baru saja", etc)
+  if (activities.length > 0) {
+    countMap.set(today, activities.length)
+  }
+
+  // Generate 12 weeks (84 days) going back from today
+  const cells: { level: number; tooltip: string; date: string }[] = []
+  const now = new Date()
+  // Start from 83 days ago
+  for (let i = 83; i >= 0; i--) {
+    const d = new Date(now)
+    d.setDate(d.getDate() - i)
+    const dateStr = d.toISOString().split('T')[0]
+    const count = countMap.get(dateStr) || 0
+    const level = count === 0 ? 0 : count <= 1 ? 1 : count <= 3 ? 2 : count <= 5 ? 3 : 4
+    const dayName = dayLabels[(d.getDay() + 6) % 7]
+    cells.push({
+      level,
+      tooltip: `${dayName}, ${d.getDate()}/${d.getMonth() + 1}: ${count === 0 ? 'Tidak aktif' : count + ' aktivitas'}`,
+      date: dateStr,
+    })
   }
   return cells
 }
@@ -91,7 +109,7 @@ function AnimatedCount({ target }: { target: number }) {
 /* ─── Component ─── */
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<TabKey>('progress')
-  const [heatmapCells] = useState(generateHeatmap)
+  const [heatmapCells] = useState(() => generateHeatmap(progress.activities))
   const { success } = useToast()
   const profile = useAuthStore((s) => s.profile)
   const displayName = useAuthStore((s) => s.displayName)
@@ -330,7 +348,7 @@ export default function ProfilePage() {
 /* ══════════════════════════════════════
    TAB: Progress
    ══════════════════════════════════════ */
-function ProgressTab({ items, heatmap, timeline }: { items: ProgressItem[]; heatmap: { level: number; tooltip: string }[]; timeline: TimelineEvent[] }) {
+function ProgressTab({ items, heatmap, timeline }: { items: ProgressItem[]; heatmap: { level: number; tooltip: string; date: string }[]; timeline: TimelineEvent[] }) {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
@@ -360,25 +378,31 @@ function ProgressTab({ items, heatmap, timeline }: { items: ProgressItem[]; heat
 
         {/* Activity Heatmap */}
         <div className="bg-white rounded-xl border border-ink-7 p-5 hover:shadow-md transition-shadow">
-          <h3 className="text-[13px] font-bold mb-3.5">Aktivitas Mingguan</h3>
-          <div className="grid grid-cols-12 gap-[3px] mb-2.5">
-            {heatmap.map((cell, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.005 }}
-                className="aspect-square rounded-[3px] hover:scale-125 hover:shadow-md transition-all cursor-pointer"
-                style={{ background: heatColors[cell.level] }}
-                title={cell.tooltip}
-              />
-            ))}
+          <h3 className="text-[13px] font-bold mb-3.5">Aktivitas 12 Minggu</h3>
+          <div className="flex gap-1.5">
+            {/* Day labels */}
+            <div className="flex flex-col gap-[3px] pt-0 mr-0.5">
+              {dayLabels.map((d, i) => (
+                <span key={i} className="text-[9px] text-ink-5 h-[14px] flex items-center leading-none">{i % 2 === 0 ? d : ''}</span>
+              ))}
+            </div>
+            {/* Grid: 12 columns (weeks) × 7 rows (days) */}
+            <div className="flex-1 grid grid-rows-7 grid-flow-col gap-[3px]">
+              {heatmap.map((cell, i) => (
+                <div
+                  key={i}
+                  className="w-[14px] h-[14px] rounded-[3px] hover:scale-125 hover:shadow-sm transition-transform cursor-default"
+                  style={{ background: heatColors[cell.level] }}
+                  title={cell.tooltip}
+                />
+              ))}
+            </div>
           </div>
-          <div className="flex items-center gap-1.5 justify-end text-[9px] text-ink-4">
+          <div className="flex items-center gap-1.5 justify-end text-[9px] text-ink-4 mt-2.5">
             <span>Sedikit</span>
             <div className="flex gap-0.5">
               {heatColors.map((c, i) => (
-                <span key={i} className="w-2.5 h-2.5 rounded-sm" style={{ background: c }} />
+                <span key={i} className="w-[10px] h-[10px] rounded-sm" style={{ background: c }} />
               ))}
             </div>
             <span>Banyak</span>
