@@ -308,13 +308,24 @@ export default function AuthPage() {
 
               {tab === 'login' && (
                 <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 text-sm text-ink-4 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 rounded border-ink-6 text-teal-600 focus:ring-teal-600/20"
-                    />
+                  <label className="flex items-center gap-2.5 text-sm text-ink-4 cursor-pointer select-none group">
+                    <button
+                      type="button"
+                      role="checkbox"
+                      aria-checked={rememberMe}
+                      onClick={() => setRememberMe(!rememberMe)}
+                      className={`w-[18px] h-[18px] rounded-[5px] border-2 flex items-center justify-center transition-all ${
+                        rememberMe
+                          ? 'bg-teal-600 border-teal-600'
+                          : 'border-ink-6 group-hover:border-ink-4'
+                      }`}
+                    >
+                      {rememberMe && (
+                        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                          <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </button>
                     Ingat saya
                   </label>
                   <button type="button" onClick={handleForgotPassword} className="text-sm text-teal-600 font-medium hover:underline">Lupa password?</button>
