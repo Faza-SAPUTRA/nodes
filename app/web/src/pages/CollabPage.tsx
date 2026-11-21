@@ -5,6 +5,7 @@ import {
   ChevronLeft, Monitor, Tablet, Smartphone,
   MessageSquare, ThumbsUp, UserPlus,
   Send, X, MapPin, Check, Reply, Trash2,
+  Users, Plus, Rocket,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useToast } from '../components/ui/Toast'
@@ -43,10 +44,27 @@ interface ActivityItem {
   time: string
 }
 
+interface CollabSession {
+  id: string
+  title: string
+  createdAt: string
+}
+
+/* ─── Helpers ─── */
+function getStoredSessions(): CollabSession[] {
+  try {
+    const raw = localStorage.getItem('nodes-collab-sessions')
+    if (raw) return JSON.parse(raw)
+  } catch { /* ignore */ }
+  return []
+}
+
+function saveSessions(sessions: CollabSession[]) {
+  localStorage.setItem('nodes-collab-sessions', JSON.stringify(sessions))
+}
+
 /* ─── Data ─── */
 const participants = [
-  { name: 'Budi', letter: 'B', bg: '#7C3AED' },
-  { name: 'Sari', letter: 'S', bg: '#EC4899' },
   { name: 'Kamu', letter: 'AP', bg: '#0D9488', isYou: true },
 ]
 
@@ -54,11 +72,6 @@ type DeviceMode = 'desktop' | 'tablet' | 'mobile'
 type PanelTab = 'chat' | 'activity' | 'votes'
 
 const deviceIcons = { desktop: Monitor, tablet: Tablet, mobile: Smartphone }
-
-const replyPool = [
-  { name: 'Budi', av: '#7C3AED', letter: 'B', texts: ['Mantap, lanjutin terus.', 'Oke noted, gua cek dulu ya.', 'Setuju banget sama perubahan ini.', 'Lebih clean sekarang.'] },
-  { name: 'Sari', av: '#EC4899', letter: 'S', texts: ['Keren! Tinggal responsive aja nih.', 'Warnanya udah bagus menurut gua.', 'Coba tambahin hover state juga.', 'Sip, udah gua mark di pin.'] },
-]
 
 function escapeHtml(str: string) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -69,6 +82,51 @@ let nextActivityId = 100
 
 /* ─── Component ─── */
 export default function CollabPage() {
+  const navigate = useNavigate()
+  const { success, info, warning } = useToast()
+
+  // Session management
+  const [sessions, setSessions] = useState<CollabSession[]>(getStoredSessions)
+  const [activeSession, setActiveSession] = useState<CollabSession | null>(null)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [newSessionTitle, setNewSessionTitle] = useState('')
+
+  // If user has no sessions, show empty state
+  const hasActiveSession = activeSession !== null
+
+  function createSession() {
+    const title = newSessionTitle.trim()
+    if (!title) {
+      warning('Judul Kosong', 'Masukkan judul sesi kolaborasi.')
+      return
+    }
+    const session: CollabSession = {
+      id: Date.now().toString(),
+      title,
+      createdAt: new Date().toLocaleString('id-ID'),
+    }
+    const updated = [session, ...sessions]
+    setSessions(updated)
+    saveSessions(updated)
+    setActiveSession(session)
+    setNewSessionTitle('')
+    setShowCreateModal(false)
+    success('Sesi Dibuat', `Sesi "${title}" berhasil dibuat.`)
+    // Reset collab state
+    setChat([{ id: '0', author: '', avatar: '', avatarBg: '', text: 'Sesi review dimulai — baru saja', time: '', system: true }])
+    setCommentPins([])
+    setActivity([])
+  }
+
+  function deleteSession(id: string) {
+    const updated = sessions.filter(s => s.id !== id)
+    setSessions(updated)
+    saveSessions(updated)
+    if (activeSession?.id === id) setActiveSession(null)
+    info('Sesi Dihapus', 'Sesi kolaborasi berhasil dihapus.')
+  }
+
+  // Collab state (only used when session is active)
   const [device, setDevice] = useState<DeviceMode>('desktop')
   const [panelTab, setPanelTab] = useState<PanelTab>('chat')
   const [showComments, setShowComments] = useState(true)
@@ -97,8 +155,6 @@ export default function CollabPage() {
 
   const chatEndRef = useRef<HTMLDivElement>(null)
   const previewRef = useRef<HTMLDivElement>(null)
-  const navigate = useNavigate()
-  const { success, info, warning } = useToast()
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -129,17 +185,6 @@ export default function CollabPage() {
     setChat(prev => [...prev, newMsg])
     setInput('')
     addActivity('mengirim pesan di chat')
-
-    // Simulate reply
-    setTimeout(() => {
-      const replier = replyPool[Math.floor(Math.random() * replyPool.length)]
-      const replyText = replier.texts[Math.floor(Math.random() * replier.texts.length)]
-      setChat(prev => [...prev, {
-        id: (Date.now() + 1).toString(),
-        author: replier.name, avatar: replier.letter, avatarBg: replier.av,
-        text: replyText, time: 'baru saja',
-      }])
-    }, 1500 + Math.random() * 2000)
   }
 
   /* ─── Pin: click on preview to add ─── */
@@ -221,41 +266,26 @@ export default function CollabPage() {
     addActivity(`membalas komentar #${pinId}`)
     setPinReplyText('')
     setReplyingToPinId(null)
-
-    // Simulate bot reply to pin
-    setTimeout(() => {
-      const replier = replyPool[Math.floor(Math.random() * replyPool.length)]
-      const replyText = replier.texts[Math.floor(Math.random() * replier.texts.length)]
-      setCommentPins(prev => prev.map(p => {
-        if (p.id !== pinId) return p
-        return {
-          ...p,
-          replies: [...p.replies, {
-            author: replier.name,
-            avatarBg: replier.av,
-            letter: replier.letter,
-            time: 'baru saja',
-            text: replyText,
-          }],
-        }
-      }))
-    }, 2000 + Math.random() * 1500)
   }
 
   function handleCopy() {
-    navigator.clipboard.writeText('https://nodes.app/collab/r3v13w-x7k')
+    navigator.clipboard.writeText('https://nodes-learn.vercel.app/app/kolaborasi')
     setCopied(true)
     success('Link Tersalin!', 'Link undangan berhasil disalin ke clipboard.')
     setTimeout(() => setCopied(false), 2000)
   }
 
   function handleBack() {
-    navigate('/app')
+    if (hasActiveSession) {
+      setActiveSession(null)
+    } else {
+      navigate('/app')
+    }
   }
 
   function handleEndSession() {
     info('Sesi Berakhir', 'Sesi kolaborasi telah diakhiri.')
-    navigate('/app')
+    setActiveSession(null)
   }
 
   function handleSendInvite() {
@@ -275,6 +305,139 @@ export default function CollabPage() {
   const unresolvedCount = commentPins.filter(p => !p.resolved).length
   const deviceWidth = device === 'desktop' ? 'max-w-[900px]' : device === 'tablet' ? 'max-w-[600px]' : 'max-w-[375px]'
 
+  /* ════════════════════════════════════════════
+   *  EMPTY STATE — No active session
+   * ════════════════════════════════════════════ */
+  if (!hasActiveSession) {
+    return (
+      <div className="flex flex-col h-screen w-screen fixed inset-0 bg-white z-50">
+        {/* Header */}
+        <header className="flex items-center justify-between px-5 py-3 bg-white border-b border-ink-7 shrink-0">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/app')}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-ink-4 hover:bg-ink-8 hover:text-ink transition-colors shrink-0"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <h1 className="text-[15px] font-bold">Kolaborasi</h1>
+          </div>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 text-white text-xs font-semibold rounded-lg hover:bg-teal-700 transition-colors"
+          >
+            <Plus size={14} />
+            Buat Sesi Baru
+          </button>
+        </header>
+
+        {/* Content */}
+        <div className="flex-1 flex items-center justify-center p-6">
+          {sessions.length === 0 ? (
+            /* Truly empty — no sessions ever created */
+            <div className="text-center max-w-sm">
+              <div className="w-16 h-16 rounded-2xl bg-ink-9 flex items-center justify-center mx-auto mb-4">
+                <Users className="w-7 h-7 text-ink-5" />
+              </div>
+              <h2 className="text-lg font-bold text-ink mb-2">Belum Ada Sesi Kolaborasi</h2>
+              <p className="text-sm text-ink-4 leading-relaxed mb-6">
+                Buat sesi kolaborasi untuk mereview desain bersama teman atau dosen. Kamu bisa menambahkan pin komentar, chat, dan voting.
+              </p>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="flex items-center gap-2 mx-auto px-5 py-2.5 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors"
+              >
+                <Rocket className="w-4 h-4" />
+                Mulai Sesi Pertama
+              </button>
+            </div>
+          ) : (
+            /* Has past sessions — show list */
+            <div className="w-full max-w-lg">
+              <h2 className="text-lg font-bold text-ink mb-4">Sesi Kolaborasi</h2>
+              <div className="space-y-2">
+                {sessions.map(session => (
+                  <div
+                    key={session.id}
+                    className="flex items-center justify-between p-4 bg-white border border-ink-7 rounded-xl hover:border-teal-200 transition-colors group"
+                  >
+                    <button
+                      onClick={() => {
+                        setActiveSession(session)
+                        setChat([{ id: '0', author: '', avatar: '', avatarBg: '', text: 'Sesi review dimulai — baru saja', time: '', system: true }])
+                        setCommentPins([])
+                        setActivity([])
+                      }}
+                      className="flex-1 text-left min-w-0"
+                    >
+                      <h3 className="text-sm font-semibold text-ink group-hover:text-teal-600 transition-colors truncate">{session.title}</h3>
+                      <p className="text-xs text-ink-5 mt-0.5">Dibuat: {session.createdAt}</p>
+                    </button>
+                    <button
+                      onClick={() => deleteSession(session.id)}
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-ink-5 hover:bg-red-50 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 shrink-0 ml-2"
+                      title="Hapus sesi"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Create Session Modal */}
+        <AnimatePresence>
+          {showCreateModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-ink/50 flex items-center justify-center z-[100]"
+              onClick={() => setShowCreateModal(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="w-[400px] max-w-[90vw] bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,.15)] overflow-hidden"
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between px-5 py-4 border-b border-ink-7">
+                  <h3 className="text-sm font-bold">Buat Sesi Kolaborasi</h3>
+                  <button onClick={() => setShowCreateModal(false)} className="w-7 h-7 rounded-md flex items-center justify-center text-ink-4 hover:bg-ink-8 hover:text-ink transition-colors">
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className="p-5">
+                  <label className="block text-xs font-semibold text-ink-4 mb-1.5">Judul Sesi</label>
+                  <input
+                    autoFocus
+                    value={newSessionTitle}
+                    onChange={e => setNewSessionTitle(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && createSession()}
+                    className="w-full px-3 py-2.5 rounded-xl border border-ink-7 text-sm outline-none focus:border-teal-600 transition-colors mb-4"
+                    placeholder="Contoh: Review Landing Page Sprint 3"
+                  />
+                  <button
+                    onClick={createSession}
+                    className="w-full py-2.5 rounded-xl bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 transition-colors"
+                  >
+                    Mulai Sesi
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    )
+  }
+
+  /* ════════════════════════════════════════════
+   *  ACTIVE SESSION
+   * ════════════════════════════════════════════ */
   return (
     <div className="flex flex-col h-screen w-screen fixed inset-0 bg-white z-50">
       {/* ─── Room Header ─── */}
@@ -287,18 +450,12 @@ export default function CollabPage() {
             <ChevronLeft size={16} />
           </button>
           <div className="min-w-0">
-            <h1 className="text-[15px] font-bold truncate">Review: Design System Components</h1>
+            <h1 className="text-[15px] font-bold truncate">{activeSession.title}</h1>
             <div className="flex items-center gap-1.5 text-[11px] text-ink-4 mt-0.5 flex-wrap">
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-semibold text-teal-600 bg-teal-600/[.06] border border-teal-600/15 whitespace-nowrap">
-                Sesi 9 · Design System
-              </span>
-              <span className="text-ink-5">·</span>
               <span className="flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_6px_rgba(34,197,94,.5)] animate-pulse-dot" />
                 Live Session
               </span>
-              <span className="text-ink-5 hidden sm:inline">·</span>
-              <span className="hidden sm:inline">Dimulai 12 menit lalu</span>
               <span className="text-ink-5 hidden sm:inline">·</span>
               <span className="hidden sm:inline">{participants.length} peserta</span>
             </div>
@@ -490,7 +647,7 @@ export default function CollabPage() {
                       'w-[22px] h-[22px] rounded-full text-white text-[9px] font-bold flex items-center justify-center border-2 border-white shadow-md transition-transform group-hover:scale-110',
                       pin.resolved ? 'bg-green-500 shadow-green-500/30' : 'bg-purple-600 shadow-purple-600/30'
                     )}>
-                      {pin.resolved ? '✓' : pin.id}
+                      {pin.resolved ? '\u2713' : pin.id}
                     </div>
 
                     {/* Pin Popup */}
@@ -506,7 +663,6 @@ export default function CollabPage() {
                             left: '50%',
                             transform: 'translateX(-50%)',
                             width: 280,
-                            // Keep popup within viewport
                             maxWidth: 'calc(100vw - 32px)',
                           }}
                           onClick={e => e.stopPropagation()}
@@ -767,18 +923,18 @@ export default function CollabPage() {
                     <VoteCard
                       label="Versi A — Dark"
                       gradient="linear-gradient(135deg,#0F172A,#1E293B)"
-                      initialVotes={2}
-                      total={3}
-                      voters={[{ letter: 'B', bg: '#7C3AED' }, { letter: 'AP', bg: '#0D9488' }]}
+                      initialVotes={0}
+                      total={1}
+                      voters={[]}
                       onVote={(voted) => addActivity(voted ? 'vote untuk Versi A — Dark' : 'membatalkan vote Versi A')}
                     />
                     <VoteCard
                       label="Versi B — Light"
                       labelColor="#064E3B"
                       gradient="linear-gradient(135deg,#ECFDF5,#D1FAE5)"
-                      initialVotes={1}
-                      total={3}
-                      voters={[{ letter: 'S', bg: '#EC4899' }]}
+                      initialVotes={0}
+                      total={1}
+                      voters={[]}
                       onVote={(voted) => addActivity(voted ? 'vote untuk Versi B — Light' : 'membatalkan vote Versi B')}
                     />
                   </div>
@@ -817,7 +973,7 @@ export default function CollabPage() {
                 <div className="flex gap-1.5">
                   <input
                     readOnly
-                    value="https://nodes.app/collab/r3v13w-x7k"
+                    value="https://nodes-learn.vercel.app/app/kolaborasi"
                     className="flex-1 px-3 py-2 rounded-md border border-ink-7 text-[11px] text-ink-4 outline-none"
                   />
                   <button
@@ -865,7 +1021,7 @@ function VoteCard({ label, labelColor, gradient, initialVotes, total, voters, on
 }) {
   const [voted, setVoted] = useState(false)
   const [votes, setVotes] = useState(initialVotes)
-  const pct = Math.round((votes / total) * 100)
+  const pct = total > 0 ? Math.round((votes / Math.max(total, votes)) * 100) : 0
 
   function handleVote() {
     if (voted) {
@@ -907,7 +1063,7 @@ function VoteCard({ label, labelColor, gradient, initialVotes, total, voters, on
           <span key={i} className="w-[18px] h-[18px] rounded-[5px] flex items-center justify-center text-white text-[7px] font-bold" style={{ background: v.bg }}>{v.letter}</span>
         ))}
         {voted && (
-          <span className="w-[18px] h-[18px] rounded-[5px] flex items-center justify-center text-white text-[7px] font-bold bg-teal-600 ring-1 ring-teal-400">✓</span>
+          <span className="w-[18px] h-[18px] rounded-[5px] flex items-center justify-center text-white text-[7px] font-bold bg-teal-600 ring-1 ring-teal-400">{'\u2713'}</span>
         )}
       </div>
     </motion.div>
