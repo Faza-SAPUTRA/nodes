@@ -26,14 +26,26 @@ export default function Sidebar() {
   }
 
   return (
-    <aside
-      role="navigation"
-      aria-label="Menu navigasi utama"
-      className={clsx(
-        'fixed top-0 left-0 bottom-0 z-10 flex flex-col bg-white border-r border-ink-7 transition-all duration-300 ease-[cubic-bezier(.4,0,.2,1)] overflow-hidden',
-        expanded ? 'w-60 shadow-[4px_0_24px_rgba(15,23,42,.04)]' : 'w-14'
+    <>
+      {/* Mobile backdrop overlay */}
+      {expanded && (
+        <div
+          className="fixed inset-0 bg-black/40 z-[9] lg:hidden"
+          onClick={() => useSidebarStore.getState().setExpanded(false)}
+          aria-hidden="true"
+        />
       )}
-    >
+      <aside
+        role="navigation"
+        aria-label="Menu navigasi utama"
+        className={clsx(
+          'fixed top-0 left-0 bottom-0 z-10 flex flex-col bg-white border-r border-ink-7 transition-all duration-300 ease-[cubic-bezier(.4,0,.2,1)] overflow-hidden',
+          expanded ? 'w-60 shadow-[4px_0_24px_rgba(15,23,42,.04)]' : 'w-14',
+          // Mobile: hide when collapsed, show when expanded
+          'max-lg:w-60',
+          expanded ? 'max-lg:translate-x-0' : 'max-lg:-translate-x-full'
+        )}
+      >
       {/* Logo */}
       <Link
         to="/"
@@ -170,5 +182,6 @@ export default function Sidebar() {
         </button>
       </div>
     </aside>
+    </>
   )
 }
