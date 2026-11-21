@@ -93,7 +93,7 @@ export default function CatMascot() {
   const [isOpen, setIsOpen] = useState(false)
   const [blinking, setBlinking] = useState(false)
   const [tipIndex, setTipIndex] = useState(0)
-  const [dismissed, setDismissed] = useState(() => sessionStorage.getItem('nodes-cat-dismissed') === 'true')
+  const [dismissed] = useState(() => sessionStorage.getItem('nodes-cat-dismissed') === 'true')
 
   // Get tips for current page
   const currentPath = Object.keys(pageTips).find(p =>
