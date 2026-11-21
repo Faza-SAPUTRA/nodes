@@ -103,7 +103,7 @@ export default function Topbar() {
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setSearchFocused(true)}
             placeholder="Cari modul, materi, atau proyek..."
-            className="flex-1 bg-transparent border-none outline-none text-sm text-ink placeholder:text-ink-5"
+            className="flex-1 bg-transparent border-none outline-none text-sm text-ink placeholder:text-ink-5 focus-visible:outline-none"
             aria-label="Cari modul, materi, atau proyek"
             role="searchbox"
           />

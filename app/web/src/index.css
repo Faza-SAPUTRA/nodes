@@ -81,6 +81,13 @@ body {
   outline-offset: 2px;
 }
 
+/* Inputs/textareas inside styled containers handle focus via border changes */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
 /* ── Selection color ── */
 ::selection {
   background: rgba(13, 148, 136, 0.15);
