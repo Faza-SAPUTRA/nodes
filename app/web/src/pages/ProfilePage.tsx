@@ -224,10 +224,10 @@ export default function ProfilePage() {
             transition={{ duration: 0.4 }}
             className="relative shrink-0"
           >
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-300 flex items-center justify-center text-white text-[1.75rem] font-extrabold shadow-[0_8px_24px_rgba(13,148,136,.2)]">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-teal-600 to-teal-300 flex items-center justify-center text-white text-[1.75rem] font-bold shadow-[0_8px_24px_rgba(13,148,136,.2)]">
               {initials()}
             </div>
-            <span className="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-md bg-ink text-teal-300 text-[9px] font-bold border-2 border-ink-9">Lv.{profile?.level ?? 7}</span>
+            <span className="absolute -bottom-1 -right-1 px-2 py-0.5 rounded-md bg-ink text-teal-300 text-[9px] font-bold border-2 border-ink-9">Lv.{Math.min(Math.floor(xp / 200) + 1, 99)}</span>
           </motion.div>
 
           {/* Info */}
@@ -239,7 +239,7 @@ export default function ProfilePage() {
           >
             <h1 className="text-2xl font-bold tracking-tight">{displayName()}</h1>
             <p className="text-xs text-ink-4 mt-1 leading-relaxed">
-              {profile?.bio || 'UI/UX Design Enthusiast · Mahasiswa Informatika ITI · Semester 5 · Belajar UI/UX di NODES'}
+              {profile?.bio || 'Belum ada bio. Tambahkan di Pengaturan.'}
             </p>
             <div className="flex gap-1.5 mt-2 flex-wrap justify-center sm:justify-start">
               {dynamicTags.length > 0 ? dynamicTags.map(t => (

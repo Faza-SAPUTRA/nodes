@@ -263,10 +263,10 @@ export default function LandingPage() {
             transition={{ duration: 0.8, delay: 0.9 }}
             className="flex flex-col sm:flex-row gap-6 sm:gap-16"
           >
-            {[{ target: 500, suffix: '+', label: 'Mahasiswa Aktif' }, { target: 16, label: 'Sesi Perkuliahan' }, { target: 8, label: 'Proyek Praktik' }].map((m, i) => (
+            {[{ target: 16, label: 'Sesi Perkuliahan' }, { target: 8, label: 'Proyek Praktik' }, { target: 1, label: 'Platform Terintegrasi' }].map((m, i) => (
               <div key={i}>
-                <div className="text-[2.5rem] font-extrabold text-ink leading-none tracking-tight">
-                  <Counter target={m.target} suffix={m.suffix} />
+                <div className="text-[2.5rem] font-bold text-ink leading-none tracking-tight">
+                  <Counter target={m.target} />
                 </div>
                 <div className="text-xs font-medium text-ink-5 uppercase tracking-widest mt-1.5">{m.label}</div>
               </div>
@@ -381,7 +381,7 @@ export default function LandingPage() {
             {processSteps.map((step, i) => (
               <Reveal key={i} delay={i * 0.15} className="px-6 text-left relative">
                 <div className="group relative z-[1] w-[72px] h-[72px] rounded-full bg-white border-2 border-ink-7 flex items-center justify-center mb-7 hover:bg-teal-600 hover:border-teal-600 hover:scale-110 hover:shadow-[0_8px_24px_rgba(13,148,136,.2)] transition-all duration-400">
-                  <span className="text-lg font-extrabold text-ink-5 group-hover:text-white transition-colors">{step.num}</span>
+                  <span className="text-lg font-bold text-ink-5 group-hover:text-white transition-colors">{step.num}</span>
                 </div>
                 <h3 className="text-lg font-bold text-ink mb-2">{step.title}</h3>
                 <p className="text-sm text-ink-4 leading-relaxed">{step.desc}</p>
@@ -420,7 +420,7 @@ export default function LandingPage() {
               Siap membangun,<br />bukan cuma <em className="not-italic text-teal-500">membaca</em>?
             </h2>
             <p className="text-lg text-ink-5 leading-relaxed mb-10">
-              Gabung dengan 500+ mahasiswa ITI yang sudah belajar UI/UX secara interaktif. Gratis, tanpa kartu kredit.
+              Gabung dan mulai belajar UI/UX secara interaktif. Gratis, tanpa kartu kredit.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5">
               <Link to="/auth" className="inline-flex items-center gap-2.5 px-9 py-4 text-[0.9375rem] font-semibold text-ink bg-white rounded-[14px] hover:-translate-y-[3px] hover:shadow-[0_12px_40px_rgba(255,255,255,.15)] transition-all cursor-pointer">

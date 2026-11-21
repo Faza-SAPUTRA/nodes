@@ -167,7 +167,7 @@ export default function DashboardPage() {
                       transform="rotate(-90 60 60)" className="transition-all duration-1000 ease-out" />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-lg font-extrabold text-white">{continueModule.subs}</span>
+                    <span className="text-lg font-bold text-white">{continueModule.subs}</span>
                     <span className="text-[0.5rem] text-ink-5">sub-bab</span>
                   </div>
                 </div>
