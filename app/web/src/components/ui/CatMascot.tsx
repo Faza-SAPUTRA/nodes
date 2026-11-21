@@ -138,13 +138,9 @@ export default function CatMascot() {
             className="relative max-w-[260px] bg-white border border-ink-7 rounded-xl shadow-lg p-4 mr-2"
           >
             <button
-              onClick={() => {
-                setDismissed(true)
-                sessionStorage.setItem('nodes-cat-dismissed', 'true')
-                setIsOpen(false)
-              }}
+              onClick={() => setIsOpen(false)}
               className="absolute top-2 right-2 w-5 h-5 rounded-full hover:bg-ink-9 flex items-center justify-center text-ink-5 hover:text-ink transition-colors"
-              aria-label="Tutup mascot"
+              aria-label="Tutup tips"
             >
               <X className="w-3 h-3" />
             </button>
