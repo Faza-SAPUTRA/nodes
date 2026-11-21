@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, Check, BookOpen, Clock, Award, ChevronDown, Save, Lightbulb, Lock } from 'lucide-react'
+import { ChevronRight, Check, BookOpen, Clock, Award, ChevronDown, Save, Lock, ArrowRight } from 'lucide-react'
 import { modulesData } from '../data/modules'
+import { moduleSubBabs, subBabContent } from '../data/moduleSubBabs'
 import { useToast } from '../components/ui/Toast'
 import { loadProgress, saveProgress, markSubBabComplete, addActivity } from '../store/progressStore'
 
@@ -10,171 +11,15 @@ function slugify(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 }
 
-/* Sub-bab content per module (keyed by sub-bab title) */
-const subBabContent: Record<string, { heading: string; body: React.ReactNode }> = {
-  'Apa itu Design System?': {
-    heading: 'Apa itu Design System?',
-    body: (
-      <div className="space-y-5">
-        <p>Design system adalah kumpulan standar, prinsip, dan komponen yang terorganisir untuk memandu pembuatan produk digital secara konsisten. Ia bukan hanya tentang komponen UI — melainkan tentang proses, dokumentasi, dan pedoman desain.</p>
-        <h2 className="text-lg font-bold text-ink mt-8 mb-3">Mengapa Penting?</h2>
-        <ul className="space-y-2 ml-0 list-none">
-          {[
-            { title: 'Konsistensi', desc: 'Semua halaman dan fitur terasa satu kesatuan.' },
-            { title: 'Efisiensi', desc: 'Tim tidak perlu mendesain ulang komponen yang sama.' },
-            { title: 'Kolaborasi', desc: 'Designer dan developer berbicara dalam bahasa yang sama.' },
-          ].map((item, i) => (
-            <li key={i} className="flex gap-3 p-3 bg-ink-9 rounded-xl">
-              <div className="w-6 h-6 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                <span className="text-xs font-bold">{i + 1}</span>
-              </div>
-              <div><strong className="text-ink">{item.title}</strong><span className="text-ink-4"> — {item.desc}</span></div>
-            </li>
-          ))}
-        </ul>
-      </div>
-    ),
-  },
-  'Komponen UI Dasar': {
-    heading: 'Komponen UI Dasar',
-    body: (
-      <div className="space-y-5">
-        <p>Komponen UI dasar adalah fondasi dari setiap design system. Komponen-komponen ini digunakan berulang kali di seluruh produk dan harus dirancang dengan fleksibilitas tinggi.</p>
-        <h2 className="text-lg font-bold text-ink mt-8 mb-3">Komponen Fundamental</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {['Button', 'Input Field', 'Card', 'Modal', 'Badge', 'Tooltip'].map((c, i) => (
-            <div key={i} className="p-3 bg-ink-9 rounded-xl"><strong className="text-ink text-sm">{c}</strong></div>
-          ))}
-        </div>
-        <div className="p-4 bg-teal-50 border border-teal-200 rounded-xl mt-6">
-          <div className="flex items-start gap-2">
-            <Lightbulb className="w-5 h-5 text-teal-600 flex-shrink-0" />
-            <div><strong className="text-teal-700 text-sm">Tips</strong><p className="text-sm text-teal-700/80 mt-1">Mulai dari komponen yang paling sering digunakan di produk kamu.</p></div>
-          </div>
-        </div>
-      </div>
-    ),
-  },
-  'Token & Variabel Desain': {
-    heading: 'Token & Variabel Desain',
-    body: (
-      <div className="space-y-5">
-        <p>Design tokens adalah value dasar dari design system: warna, spacing, font size, border radius, dan lainnya. Tokens membuat design system menjadi scalable dan mudah diubah secara global.</p>
-        <h2 className="text-lg font-bold text-ink mt-8 mb-3">Jenis Token</h2>
-        <ul className="space-y-2 ml-0 list-none">
-          {[
-            { title: 'Color Tokens', desc: 'Primary, secondary, semantic (error, success, warning).' },
-            { title: 'Spacing Tokens', desc: 'Scale spacing: 4px, 8px, 12px, 16px, 24px, 32px, 48px.' },
-            { title: 'Typography Tokens', desc: 'Font family, size, weight, line-height, letter-spacing.' },
-            { title: 'Shadow Tokens', desc: 'Elevation levels: sm, md, lg, xl.' },
-          ].map((item, i) => (
-            <li key={i} className="flex gap-3 p-3 bg-ink-9 rounded-xl">
-              <div className="w-6 h-6 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center flex-shrink-0 mt-0.5"><span className="text-xs font-bold">{i + 1}</span></div>
-              <div><strong className="text-ink">{item.title}</strong><span className="text-ink-4"> — {item.desc}</span></div>
-            </li>
-          ))}
-        </ul>
-      </div>
-    ),
-  },
-  'Membangun Component Library': {
-    heading: 'Membangun Component Library',
-    body: (
-      <div className="space-y-5">
-        <p>Component library adalah kumpulan komponen UI yang dapat digunakan kembali (reusable) di seluruh produk. Sebuah component library yang baik akan mempercepat proses desain dan development.</p>
-        <h2 className="text-lg font-bold text-ink mt-8 mb-3">Prinsip Utama</h2>
-        <ul className="space-y-2 ml-0 list-none">
-          {[
-            { title: 'Atomic Design', desc: 'Memecah UI menjadi atom, molekul, organisme, template, dan halaman.' },
-            { title: 'Konsistensi', desc: 'Setiap komponen harus berperilaku dan terlihat sama di mana pun digunakan.' },
-            { title: 'Aksesibilitas', desc: 'Semua komponen harus memenuhi standar WCAG 2.1 AA minimal.' },
-            { title: 'Dokumentasi', desc: 'Setiap komponen wajib memiliki dokumentasi penggunaan, props, dan contoh.' },
-          ].map((item, i) => (
-            <li key={i} className="flex gap-3 p-3 bg-ink-9 rounded-xl">
-              <div className="w-6 h-6 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center flex-shrink-0 mt-0.5"><span className="text-xs font-bold">{i + 1}</span></div>
-              <div><strong className="text-ink">{item.title}</strong><span className="text-ink-4"> — {item.desc}</span></div>
-            </li>
-          ))}
-        </ul>
-        <div className="p-4 bg-teal-50 border border-teal-200 rounded-xl mt-6">
-          <div className="flex items-start gap-2">
-            <Lightbulb className="w-5 h-5 text-teal-600 flex-shrink-0" />
-            <div><strong className="text-teal-700 text-sm">Tips Praktis</strong><p className="text-sm text-teal-700/80 mt-1">Mulai dari komponen yang paling sering digunakan: Button, Input, Card, Modal. Pastikan setiap komponen memiliki minimal 3 varian.</p></div>
-          </div>
-        </div>
-        <h2 className="text-lg font-bold text-ink mt-8 mb-3">Contoh Struktur</h2>
-        <div className="p-4 bg-ink rounded-xl text-sm font-mono text-teal-300 overflow-x-auto">
-          <pre className="whitespace-pre">{`design-system/
-├── tokens/
-│   ├── colors.json
-│   ├── typography.json
-│   └── spacing.json
-├── components/
-│   ├── Button/
-│   ├── Input/
-│   └── Card/
-└── documentation/
-    └── getting-started.md`}</pre>
-        </div>
-      </div>
-    ),
-  },
-  'Dokumentasi & Handoff': {
-    heading: 'Dokumentasi & Handoff',
-    body: (
-      <div className="space-y-5">
-        <p>Dokumentasi yang baik adalah kunci keberhasilan design system. Tanpa dokumentasi, design system hanya menjadi kumpulan file yang tidak terpakai.</p>
-        <h2 className="text-lg font-bold text-ink mt-8 mb-3">Elemen Dokumentasi</h2>
-        <ul className="space-y-2 ml-0 list-none">
-          {[
-            { title: 'Usage Guidelines', desc: 'Kapan dan bagaimana menggunakan komponen.' },
-            { title: 'Code Examples', desc: 'Contoh implementasi dalam kode.' },
-            { title: 'Do\'s and Don\'ts', desc: 'Praktik terbaik dan kesalahan umum.' },
-          ].map((item, i) => (
-            <li key={i} className="flex gap-3 p-3 bg-ink-9 rounded-xl">
-              <div className="w-6 h-6 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center flex-shrink-0 mt-0.5"><span className="text-xs font-bold">{i + 1}</span></div>
-              <div><strong className="text-ink">{item.title}</strong><span className="text-ink-4"> — {item.desc}</span></div>
-            </li>
-          ))}
-        </ul>
-      </div>
-    ),
-  },
-  'Studi Kasus: Design System Nyata': {
-    heading: 'Studi Kasus: Design System Nyata',
-    body: (
-      <div className="space-y-5">
-        <p>Mari kita pelajari beberapa design system dunia nyata yang dapat menjadi inspirasi.</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {[
-            { name: 'Material Design', by: 'Google', desc: 'Design system komprehensif dengan panduan lengkap untuk Android, Web, dan Flutter.' },
-            { name: 'Carbon', by: 'IBM', desc: 'Design system open-source dengan fokus pada aksesibilitas dan enterprise.' },
-            { name: 'Polaris', by: 'Shopify', desc: 'Design system untuk membangun pengalaman merchant yang konsisten.' },
-            { name: 'Atlassian Design', by: 'Atlassian', desc: 'Design system untuk produk-produk kolaborasi tim.' },
-          ].map((ds, i) => (
-            <div key={i} className="p-4 bg-ink-9 rounded-xl">
-              <strong className="text-ink text-sm">{ds.name}</strong>
-              <span className="text-xs text-ink-5 ml-1">by {ds.by}</span>
-              <p className="text-xs text-ink-4 mt-1">{ds.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    ),
-  },
+interface SubBabState {
+  id: number
+  title: string
+  done: boolean
 }
-
-const defaultSubBabs = [
-  { id: 1, title: 'Apa itu Design System?', done: false },
-  { id: 2, title: 'Komponen UI Dasar', done: false },
-  { id: 3, title: 'Token & Variabel Desain', done: false },
-  { id: 4, title: 'Membangun Component Library', done: false },
-  { id: 5, title: 'Dokumentasi & Handoff', done: false },
-  { id: 6, title: 'Studi Kasus: Design System Nyata', done: false },
-]
 
 export default function ModuleDetailPage() {
   const { slug } = useParams()
+  const navigate = useNavigate()
   const { success, warning } = useToast()
 
   // Find module from data
@@ -182,24 +27,63 @@ export default function ModuleDetailPage() {
     return modulesData.find((m) => slugify(m.title) === slug)
   }, [slug])
 
-  const title = moduleData?.title || slug?.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || 'Design System'
-  const sessionNum = moduleData?.num || '09'
+  const title = moduleData?.title || slug?.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || 'Modul'
+  const sessionNum = moduleData?.num || '01'
   const category = moduleData?.tags[0] || 'Inti'
   const duration = moduleData?.duration || '60 menit'
   const weight = moduleData?.weight || 5
+  const moduleId = moduleData?.id || 1
 
-  // Sub-bab state with done toggling
-  const [subBabs, setSubBabs] = useState(() => {
-    const saved = localStorage.getItem(`nodes-subbabs-${slug}`)
+  // Get sub-babs for THIS module
+  const defaultSubBabs: SubBabState[] = useMemo(() => {
+    const subs = moduleSubBabs[moduleId]
+    if (subs) {
+      return subs.map((s) => ({ id: s.id, title: s.title, done: false }))
+    }
+    // Fallback: generate generic sub-babs matching subs count
+    const count = moduleData?.subs || 4
+    return Array.from({ length: count }, (_, i) => ({
+      id: i + 1,
+      title: `Sub-bab ${i + 1}`,
+      done: false,
+    }))
+  }, [moduleId, moduleData?.subs])
+
+  // Sub-bab state with done toggling — uses module-specific localStorage key
+  const storageKey = `nodes-subbabs-${slug}`
+  const [subBabs, setSubBabs] = useState<SubBabState[]>(() => {
+    const saved = localStorage.getItem(storageKey)
     if (saved) {
-      try { return JSON.parse(saved) } catch { /* ignore */ }
+      try {
+        const parsed = JSON.parse(saved) as SubBabState[]
+        // If stored sub-bab count doesn't match current module, reset
+        if (parsed.length === defaultSubBabs.length) return parsed
+      } catch { /* ignore */ }
     }
     return defaultSubBabs
   })
 
+  // Reset sub-babs when slug changes (navigating to different module)
+  useEffect(() => {
+    const saved = localStorage.getItem(`nodes-subbabs-${slug}`)
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved) as SubBabState[]
+        if (parsed.length === defaultSubBabs.length) {
+          setSubBabs(parsed)
+          // Set active to first incomplete
+          const firstIncomplete = parsed.find((s) => !s.done)
+          setActiveSub(firstIncomplete?.id ?? 1)
+          return
+        }
+      } catch { /* ignore */ }
+    }
+    setSubBabs(defaultSubBabs)
+    setActiveSub(defaultSubBabs[0]?.id ?? 1)
+  }, [slug]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const [activeSub, setActiveSub] = useState(() => {
-    // Start at first incomplete sub-bab
-    const firstIncomplete = subBabs.find((s: typeof defaultSubBabs[0]) => !s.done)
+    const firstIncomplete = subBabs.find((s) => !s.done)
     return firstIncomplete?.id ?? 1
   })
 
@@ -217,8 +101,9 @@ export default function ModuleDetailPage() {
   }, [notesKey])
 
   // Calculate progress
-  const doneCount = subBabs.filter((s: typeof defaultSubBabs[0]) => s.done).length
+  const doneCount = subBabs.filter((s) => s.done).length
   const progress = Math.round((doneCount / subBabs.length) * 100)
+  const isModuleComplete = progress >= 100
 
   // Persist sub-bab state
   useEffect(() => {
@@ -237,10 +122,10 @@ export default function ModuleDetailPage() {
       warning('Sub-bab Terkunci', 'Selesaikan sub-bab sebelumnya terlebih dahulu.')
       return
     }
-    setSubBabs((prev: typeof defaultSubBabs) =>
+    setSubBabs((prev) =>
       prev.map((s) => s.id === activeSub ? { ...s, done: !s.done } : s)
     )
-    const currentSub = subBabs.find((s: typeof defaultSubBabs[0]) => s.id === activeSub)
+    const currentSub = subBabs.find((s) => s.id === activeSub)
     if (currentSub && !currentSub.done) {
       success('Sub-bab Selesai', `"${currentSub.title}" ditandai sebagai selesai.`)
 
@@ -253,21 +138,32 @@ export default function ModuleDetailPage() {
       }
 
       // Auto advance to next incomplete sub-bab
-      const nextSub = subBabs.find((s: typeof defaultSubBabs[0]) => s.id > activeSub && !s.done)
+      const nextSub = subBabs.find((s) => s.id > activeSub && !s.done)
       if (nextSub) {
         setTimeout(() => setActiveSub(nextSub.id), 500)
       }
     }
   }
 
-  const activeSubData = subBabs.find((s: typeof defaultSubBabs[0]) => s.id === activeSub)
+  // Navigate to next module
+  const handleNextModule = () => {
+    if (!moduleData) return
+    const nextModule = modulesData.find((m) => m.id === moduleData.id + 1)
+    if (nextModule) {
+      navigate(`/app/modul/${slugify(nextModule.title)}`)
+    } else {
+      navigate('/app/modul')
+    }
+  }
+
+  const activeSubData = subBabs.find((s) => s.id === activeSub)
   const activeContent = activeSubData ? subBabContent[activeSubData.title] : null
 
   // A sub-bab is locked if any previous sub-bab is not done
   function isSubLocked(subId: number): boolean {
-    const idx = subBabs.findIndex((s: typeof defaultSubBabs[0]) => s.id === subId)
+    const idx = subBabs.findIndex((s) => s.id === subId)
     if (idx <= 0) return false // first sub-bab is never locked
-    return subBabs.slice(0, idx).some((s: typeof defaultSubBabs[0]) => !s.done)
+    return subBabs.slice(0, idx).some((s) => !s.done)
   }
 
   const activeIsLocked = isSubLocked(activeSub)
@@ -327,7 +223,7 @@ export default function ModuleDetailPage() {
                 className="overflow-hidden"
               >
                 <div className="space-y-1">
-                  {subBabs.map((sub: typeof defaultSubBabs[0]) => {
+                  {subBabs.map((sub) => {
                     const locked = isSubLocked(sub.id)
                     return (
                     <button
@@ -367,6 +263,22 @@ export default function ModuleDetailPage() {
                     )
                   })}
                 </div>
+
+                {/* Next Module Button — show when module is complete */}
+                {isModuleComplete && (
+                  <div className="mt-4 pt-4 border-t border-ink-7">
+                    <button
+                      onClick={handleNextModule}
+                      className="w-full flex items-center justify-center gap-2 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors cursor-pointer"
+                    >
+                      {moduleData && moduleData.id < modulesData.length ? (
+                        <>Modul Selanjutnya <ArrowRight className="w-4 h-4" /></>
+                      ) : (
+                        <>Kembali ke Katalog <ArrowRight className="w-4 h-4" /></>
+                      )}
+                    </button>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -475,6 +387,31 @@ export default function ModuleDetailPage() {
               </button>
             </div>
           </div>
+
+          {/* Module complete banner */}
+          {isModuleComplete && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 p-6 bg-gradient-to-r from-teal-50 to-teal-100 border border-teal-200 rounded-2xl"
+            >
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-bold text-teal-800">Modul Selesai!</h3>
+                  <p className="text-sm text-teal-700/80 mt-1">
+                    Kamu telah menyelesaikan semua sub-bab di modul "{title}". Lanjutkan ke modul berikutnya.
+                  </p>
+                </div>
+                <button
+                  onClick={handleNextModule}
+                  className="flex items-center gap-2 px-6 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors cursor-pointer flex-shrink-0"
+                >
+                  {moduleData && moduleData.id < modulesData.length ? 'Modul Selanjutnya' : 'Kembali ke Katalog'}
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          )}
         </div>
       </div>
     </div>
