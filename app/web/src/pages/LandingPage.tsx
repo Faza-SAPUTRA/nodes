@@ -293,7 +293,7 @@ export default function LandingPage() {
           <div className="grid lg:grid-cols-2 gap-20 items-start">
             <Reveal className="lg:sticky lg:top-[140px]">
               <div className="text-[0.6875rem] font-bold text-teal-600 uppercase tracking-[.1em] mb-5">Tantangan Nyata</div>
-              <h2 className="text-[clamp(2rem,3.5vw,3rem)] font-extrabold text-ink leading-[1.1] tracking-tight mb-5">
+              <h2 className="text-[clamp(2rem,3.5vw,3rem)] font-bold text-ink leading-[1.1] tracking-tight mb-5">
                 E-Learning konvensional tidak dirancang untuk desainer.
               </h2>
               <p className="text-[1.0625rem] text-ink-4 leading-relaxed max-w-[440px]">
@@ -321,7 +321,7 @@ export default function LandingPage() {
         <div className="max-w-[1280px] mx-auto px-[clamp(20px,4vw,80px)]">
           <Reveal className="text-center mb-16">
             <div className="text-[0.6875rem] font-bold text-teal-600 uppercase tracking-[.1em] mb-4">Solusi</div>
-            <h2 className="text-[clamp(2rem,3.5vw,3rem)] font-extrabold text-ink leading-[1.1] tracking-tight">
+            <h2 className="text-[clamp(2rem,3.5vw,3rem)] font-bold text-ink leading-[1.1] tracking-tight">
               Satu platform.<br /><em className="not-italic text-teal-600">Semua yang kamu butuhkan.</em>
             </h2>
           </Reveal>
@@ -330,14 +330,14 @@ export default function LandingPage() {
             {/* Card 1: Integrated Learning */}
             <Reveal className="lg:col-span-7 min-h-[340px] p-10 bg-ink-9 border border-ink-7 rounded-3xl hover:border-teal-100 hover:shadow-[0_16px_48px_rgba(13,148,136,.07)] hover:-translate-y-1 transition-all duration-500">
               <div className="text-[0.625rem] font-bold text-teal-600 uppercase tracking-[.12em] mb-4">Integrated Learning</div>
-              <h3 className="text-2xl font-extrabold text-ink leading-[1.15] tracking-tight mb-3">Teori dan praktik,<br />berdampingan.</h3>
+              <h3 className="text-2xl font-bold text-ink leading-[1.15] tracking-tight mb-3">Teori dan praktik,<br />berdampingan.</h3>
               <p className="text-[0.9375rem] text-ink-4 leading-relaxed">Modul pembelajaran ditampilkan tepat di sebelah canvas kerja. Baca konsep visual hierarchy, lalu langsung aplikasikan — tanpa berpindah tab.</p>
             </Reveal>
 
             {/* Card 2: Canvas Interaktif */}
             <Reveal delay={0.1} className="lg:col-span-5 min-h-[340px] p-10 bg-white border border-ink-7 rounded-3xl hover:border-teal-100 hover:shadow-[0_16px_48px_rgba(13,148,136,.07)] hover:-translate-y-1 transition-all duration-500">
               <div className="text-[0.625rem] font-bold text-teal-600 uppercase tracking-[.12em] mb-4">Canvas Interaktif</div>
-              <h3 className="text-2xl font-extrabold text-ink leading-[1.15] tracking-tight mb-3">Eksperimen visual secara instan.</h3>
+              <h3 className="text-2xl font-bold text-ink leading-[1.15] tracking-tight mb-3">Eksperimen visual secara instan.</h3>
               <p className="text-[0.9375rem] text-ink-4 leading-relaxed mb-6">Coba grid layout, atur warna, geser elemen — rasakan prinsip desain melalui tangan kamu sendiri.</p>
               <div className="bg-ink-9 p-5 rounded-xl grid grid-cols-3 gap-2">
                 {[
@@ -353,14 +353,14 @@ export default function LandingPage() {
             {/* Card 3: Real-time Feedback */}
             <Reveal delay={0.15} className="lg:col-span-4 min-h-[300px] p-10 bg-white border border-ink-7 rounded-3xl hover:border-teal-100 hover:shadow-[0_16px_48px_rgba(13,148,136,.07)] hover:-translate-y-1 transition-all duration-500">
               <div className="text-[0.625rem] font-bold text-teal-600 uppercase tracking-[.12em] mb-4">Real-time Feedback</div>
-              <h3 className="text-2xl font-extrabold text-ink leading-[1.15] tracking-tight mb-3">Feedback instan, langsung di desain.</h3>
+              <h3 className="text-2xl font-bold text-ink leading-[1.15] tracking-tight mb-3">Feedback instan, langsung di desain.</h3>
               <p className="text-[0.9375rem] text-ink-4 leading-relaxed">Dosen memberi komentar langsung di atas elemen yang kamu buat. Tidak perlu menunggu hari.</p>
             </Reveal>
 
             {/* Card 4: Kolaborasi */}
             <Reveal delay={0.2} className="lg:col-span-8 min-h-[300px] p-10 bg-ink border border-ink-7 rounded-3xl hover:border-teal-100/20 hover:shadow-[0_16px_48px_rgba(13,148,136,.07)] hover:-translate-y-1 transition-all duration-500">
               <div className="text-[0.625rem] font-bold text-teal-500 uppercase tracking-[.12em] mb-4">Ruang Kolaborasi</div>
-              <h3 className="text-2xl font-extrabold text-white leading-[1.15] tracking-tight mb-3">Desain bersama,<br />berkembang bersama.</h3>
+              <h3 className="text-2xl font-bold text-white leading-[1.15] tracking-tight mb-3">Desain bersama,<br />berkembang bersama.</h3>
               <p className="text-[0.9375rem] text-ink-5 leading-relaxed">Anotasi, komentar, dan review — semua terjadi di satu tempat. Mahasiswa dan dosen bekerja dalam satu ekosistem yang sama.</p>
             </Reveal>
           </div>
@@ -372,7 +372,7 @@ export default function LandingPage() {
         <div className="max-w-[1280px] mx-auto px-[clamp(20px,4vw,80px)]">
           <Reveal className="mb-[72px]">
             <div className="text-[0.6875rem] font-bold text-teal-600 uppercase tracking-[.1em] mb-4">Cara Kerja</div>
-            <h2 className="text-[clamp(2rem,3.5vw,3rem)] font-extrabold text-ink leading-[1.1] tracking-tight">Empat langkah menuju mahir.</h2>
+            <h2 className="text-[clamp(2rem,3.5vw,3rem)] font-bold text-ink leading-[1.1] tracking-tight">Empat langkah menuju mahir.</h2>
           </Reveal>
 
           <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
@@ -416,7 +416,7 @@ export default function LandingPage() {
         <div className="absolute -top-[200px] -right-[100px] w-[500px] h-[500px] rounded-full bg-teal-600 blur-[160px] opacity-8 pointer-events-none" />
         <div className="relative z-[1] max-w-[680px] mx-auto px-[clamp(20px,4vw,80px)] text-center">
           <Reveal>
-            <h2 className="text-[clamp(2.5rem,5vw,4rem)] font-extrabold text-white leading-[1.05] tracking-tighter mb-5">
+            <h2 className="text-[clamp(2.5rem,5vw,4rem)] font-bold text-white leading-[1.05] tracking-tighter mb-5">
               Siap membangun,<br />bukan cuma <em className="not-italic text-teal-500">membaca</em>?
             </h2>
             <p className="text-lg text-ink-5 leading-relaxed mb-10">

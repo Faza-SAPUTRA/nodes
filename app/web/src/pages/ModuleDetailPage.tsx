@@ -295,7 +295,7 @@ export default function ModuleDetailPage() {
               transition={{ duration: 0.2 }}
             >
               <div className="bg-white border border-ink-7 rounded-2xl p-6 md:p-8 mb-4">
-                <h1 className="text-2xl font-extrabold text-ink tracking-tight mb-6">
+                <h1 className="text-xl font-bold text-ink tracking-tight mb-6">
                   {activeContent?.heading || activeSubData?.title || 'Materi'}
                 </h1>
 

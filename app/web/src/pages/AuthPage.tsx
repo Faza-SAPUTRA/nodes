@@ -81,8 +81,8 @@ export default function AuthPage() {
   }
 
   const taglines = {
-    login: { line1: 'Selamat datang', line2: 'kembali.', desc: 'Lanjutkan belajar UI/UX dari titik terakhirmu.' },
-    register: { line1: 'Mulai perjalananmu', line2: 'di sini.', desc: 'Buat akun dan mulai eksplorasi dunia desain interaktif.' },
+    login: { line1: 'Selamat datang', line2: 'kembali.', desc: 'Masuk ke akunmu dan lanjutkan dari sesi terakhir.' },
+    register: { line1: 'Gabung ke', line2: 'NODES.', desc: 'Buat akun untuk mengakses 16 sesi materi UI/UX Design.' },
   }
 
   return (
@@ -97,10 +97,7 @@ export default function AuthPage() {
         {/* Noise */}
         <div className="absolute inset-0 opacity-[.03] bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJuIj48ZmVUdXJidWxlbmNlIHR5cGU9ImZyYWN0YWxOb2lzZSIgYmFzZUZyZXF1ZW5jeT0iLjgiIG51bU9jdGF2ZXM9IjQiIHN0aXRjaFRpbGVzPSJzdGl0Y2giLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWx0ZXI9InVybCgjbikiLz48L3N2Zz4=')]" />
 
-        {/* Floating orbs */}
-        <div className="absolute top-[20%] left-[15%] w-24 h-24 rounded-full bg-teal-600/20 blur-sm animate-float" />
-        <div className="absolute top-[55%] right-[20%] w-16 h-16 rounded-full bg-teal-500/15 blur-sm animate-float [animation-delay:1s]" />
-        <div className="absolute bottom-[25%] left-[40%] w-20 h-20 rounded-full bg-teal-400/10 blur-sm animate-float [animation-delay:2s]" />
+        {/* Floating orbs — removed for cleaner look */}
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
@@ -118,10 +115,10 @@ export default function AuthPage() {
                 transition={{ duration: 0.5 }}
               >
                 <div className="mb-6">
-                  <span className="block text-[clamp(2rem,3.5vw,3rem)] font-extrabold text-white leading-[1.1] tracking-tight">
+                  <span className="block text-[clamp(2rem,3.5vw,3rem)] font-bold text-white leading-[1.1] tracking-tight">
                     {taglines[tab].line1}
                   </span>
-                  <span className="block text-[clamp(2rem,3.5vw,3rem)] font-extrabold text-teal-400 leading-[1.1] tracking-tight">
+                  <span className="block text-[clamp(2rem,3.5vw,3rem)] font-bold text-teal-400 leading-[1.1] tracking-tight">
                     {taglines[tab].line2}
                   </span>
                 </div>
@@ -129,12 +126,11 @@ export default function AuthPage() {
               </motion.div>
             </AnimatePresence>
 
-            {/* Floating cards */}
+            {/* Feature cards */}
             <div className="mt-10 space-y-3">
               {[
-                { icon: 'ruler' as const, title: 'Grid Systems', sub: 'Modul 3 · 12 menit', pct: 70 },
-                { icon: 'palette' as const, title: 'Color Theory', sub: 'Modul 5 · 18 menit', badge: 'Baru' },
-                { icon: null, title: '3 teman online', sub: 'Sedang mengerjakan proyek', live: true },
+                { icon: 'ruler' as const, title: '16 Sesi Terstruktur', sub: 'Dari fondasi hingga proyek akhir', pct: 100 },
+                { icon: 'palette' as const, title: 'Canvas Interaktif', sub: 'Praktik langsung di browser' },
               ].map((card, i) => (
                 <motion.div
                   key={i}
@@ -145,15 +141,7 @@ export default function AuthPage() {
                 >
                   {card.icon ? (
                     <div className="w-10 h-10 rounded-lg bg-white/[.08] flex items-center justify-center text-teal-300">{card.icon === 'ruler' ? <Ruler className="w-5 h-5" /> : <Palette className="w-5 h-5" />}</div>
-                  ) : (
-                    <div className="flex -space-x-2">
-                      {['bg-teal-600', 'bg-teal-500', 'bg-teal-700'].map((c, j) => (
-                        <div key={j} className={`w-8 h-8 rounded-full ${c} flex items-center justify-center text-white text-xs font-bold border-2 border-ink`}>
-                          {['F', 'S', 'R'][j]}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  ) : null}
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold text-white truncate">{card.title}</div>
                     <div className="text-xs text-ink-5">{card.sub}</div>
@@ -163,12 +151,6 @@ export default function AuthPage() {
                       <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,.15)" strokeWidth="3" />
                       <circle cx="18" cy="18" r="15" fill="none" stroke="#5EEAD4" strokeWidth="3" strokeDasharray={`${card.pct * 0.9425} ${94.25 - card.pct * 0.9425}`} strokeLinecap="round" transform="rotate(-90 18 18)" />
                     </svg>
-                  )}
-                  {card.badge && <span className="px-2 py-0.5 text-[0.625rem] font-bold bg-teal-600 text-white rounded-full">{card.badge}</span>}
-                  {card.live && (
-                    <span className="flex items-center gap-1.5 text-xs font-semibold text-teal-400">
-                      <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse-dot" />Live
-                    </span>
                   )}
                 </motion.div>
               ))}
@@ -217,11 +199,11 @@ export default function AuthPage() {
               noValidate
             >
               <div>
-                <h1 className="text-2xl font-extrabold text-ink tracking-tight">
-                  {tab === 'login' ? 'Masuk ke ' : 'Buat akun '}<span className="text-teal-600">NODES</span>
+                <h1 className="text-2xl font-bold text-ink tracking-tight">
+                  {tab === 'login' ? 'Masuk ke ' : 'Daftar di '}<span className="text-teal-600">NODES</span>
                 </h1>
                 <p className="text-sm text-ink-4 mt-1">
-                  {tab === 'login' ? 'Lanjutkan perjalanan belajar UI/UX kamu.' : 'Mulai perjalanan belajar UI/UX interaktif kamu.'}
+                  {tab === 'login' ? 'Masuk dengan email dan password akunmu.' : 'Isi data di bawah untuk membuat akun baru.'}
                 </p>
               </div>
 

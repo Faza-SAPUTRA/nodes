@@ -102,11 +102,11 @@ export default function DashboardPage() {
         <section className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-2">
           <div>
             <span className="text-sm text-ink-5">{greeting}</span>
-            <h1 className="text-3xl font-extrabold text-ink tracking-tight mt-1">{displayName().split(' ')[0]}</h1>
+            <h1 className="text-2xl font-bold text-ink mt-1">{displayName().split(' ')[0]}</h1>
             <p className="text-sm text-ink-4 mt-1">
               {totalStats.notStarted === modulesData.length
-                ? 'Mulai perjalanan belajarmu hari ini.'
-                : <>Kamu punya <strong className="text-ink">{totalStats.notStarted} sesi</strong> yang belum selesai. Lanjutkan belajar.</>
+                ? 'Belum ada modul yang dimulai.'
+                : <>{totalStats.notStarted} dari {modulesData.length} sesi belum selesai.</>
               }
             </p>
           </div>
@@ -120,7 +120,7 @@ export default function DashboardPage() {
                 <defs><linearGradient id="streakG" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#14B8A6" /><stop offset="100%" stopColor="#0D9488" /></linearGradient></defs>
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-extrabold text-ink">{progress.streak.current}</span>
+                <span className="text-2xl font-bold text-ink">{progress.streak.current}</span>
                 <span className="text-[0.5625rem] text-ink-5 font-medium">hari streak</span>
               </div>
             </div>
@@ -143,10 +143,10 @@ export default function DashboardPage() {
             <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="px-2.5 py-1 text-[0.625rem] font-bold bg-teal-600/20 text-teal-400 rounded-full uppercase tracking-wider">{continueProgress > 0 ? 'Lanjutkan Belajar' : 'Mulai Belajar'}</span>
+                  <span className="px-2.5 py-1 text-[0.625rem] font-bold bg-teal-600/20 text-teal-400 rounded-full uppercase tracking-wider">{continueProgress > 0 ? 'Lanjutkan' : 'Mulai'}</span>
                   <span className="text-xs text-ink-5">Sesi {continueModule.num} · {continueModule.tags[0]}</span>
                 </div>
-                <h2 className="text-xl md:text-2xl font-extrabold text-white tracking-tight mb-4">{continueModule.title}</h2>
+                <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight mb-4">{continueModule.title}</h2>
                 <div className="flex items-center gap-3 mb-5">
                   <div className="flex-1 max-w-xs h-2 bg-white/10 rounded-full overflow-hidden">
                     <div className="h-full bg-gradient-to-r from-teal-500 to-teal-400 rounded-full transition-all duration-1000 ease-out" style={{ width: `${ccPct}%` }} />
@@ -154,7 +154,7 @@ export default function DashboardPage() {
                   <span className="text-sm font-bold text-teal-400">{ccPct}%</span>
                 </div>
                 <Link to={`/app/modul/${moduleSlugMap[continueModule.id] || 'pengantar-ux-design'}`} className="inline-flex items-center gap-2 px-6 py-2.5 bg-white text-ink text-sm font-semibold rounded-xl hover:bg-teal-50 transition-colors cursor-pointer">
-                  {continueProgress > 0 ? 'Lanjutkan' : 'Mulai Belajar'} <ArrowRight className="w-4 h-4" />
+                  {continueProgress > 0 ? 'Lanjutkan' : 'Mulai'} <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
               {/* Module progress ring */}
@@ -196,14 +196,14 @@ export default function DashboardPage() {
                 <defs><linearGradient id="progG" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#14B8A6" /><stop offset="100%" stopColor="#0D9488" /></linearGradient></defs>
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-extrabold text-ink">{totalStats.done}</span>
+                <span className="text-2xl font-bold text-ink">{totalStats.done}</span>
                 <span className="text-[0.5625rem] text-ink-5">dari {modulesData.length} sesi</span>
               </div>
             </div>
             <div className="flex gap-6">
               {[{ val: totalStats.done, label: 'Selesai' }, { val: totalStats.inProgress, label: 'Berlangsung' }, { val: totalStats.notStarted, label: 'Belum mulai' }].map((s, i) => (
                 <div key={i} className="text-center">
-                  <div className="text-xl font-extrabold text-ink">{s.val}</div>
+                  <div className="text-xl font-bold text-ink">{s.val}</div>
                   <div className="text-[0.625rem] text-ink-5">{s.label}</div>
                 </div>
               ))}
@@ -283,7 +283,7 @@ export default function DashboardPage() {
               </div>
               <ArrowRight className="w-4 h-4 text-ink-5 ml-auto group-hover:text-teal-600 transition-colors" />
             </Link>
-            <Link to="/app/canvas" className="flex items-center gap-3 p-3 rounded-xl border border-ink-7 hover:border-teal-600 hover:bg-teal-50/50 transition-all group cursor-pointer">
+            <Link to="/app/kanvas" className="flex items-center gap-3 p-3 rounded-xl border border-ink-7 hover:border-teal-600 hover:bg-teal-50/50 transition-all group cursor-pointer">
               <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
                 <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /><path d="M9 21V9" /></svg>
               </div>

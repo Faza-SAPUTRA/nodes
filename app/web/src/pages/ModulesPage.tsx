@@ -50,7 +50,7 @@ export default function ModulesPage() {
       {/* Header */}
       <Reveal>
         <div className="mb-2">
-          <h1 className="text-3xl font-extrabold text-ink tracking-tight">Katalog Modul</h1>
+          <h1 className="text-2xl font-bold text-ink tracking-tight">Katalog Modul</h1>
           <p className="text-sm text-ink-4 mt-1">16 sesi perkuliahan UI/UX Design — dari fondasi hingga proyek akhir.</p>
         </div>
       </Reveal>
