@@ -157,21 +157,22 @@ export default function DashboardPage() {
                   {continueProgress > 0 ? 'Lanjutkan' : 'Mulai Belajar'} <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
-              {/* Color wheel */}
-              <svg viewBox="0 0 200 200" className="w-32 h-32 md:w-40 md:h-40 animate-spin-slow opacity-80" aria-hidden="true">
-                <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(255,255,255,.08)" strokeWidth="16" />
-                {[
-                  { d: 'M100 20 A80 80 0 0 1 169.28 60', c: '#EF4444' },
-                  { d: 'M169.28 60 A80 80 0 0 1 169.28 140', c: '#F59E0B' },
-                  { d: 'M169.28 140 A80 80 0 0 1 100 180', c: '#10B981' },
-                  { d: 'M100 180 A80 80 0 0 1 30.72 140', c: '#3B82F6' },
-                  { d: 'M30.72 140 A80 80 0 0 1 30.72 60', c: '#8B5CF6' },
-                  { d: 'M30.72 60 A80 80 0 0 1 100 20', c: '#EC4899' },
-                ].map((p, i) => <path key={i} d={p.d} fill="none" stroke={p.c} strokeWidth="16" strokeLinecap="round" />)}
-                <circle cx="100" cy="100" r="40" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.1)" strokeWidth="1" />
-                <text x="100" y="96" textAnchor="middle" fill="rgba(255,255,255,.5)" fontFamily="Inter" fontSize="10" fontWeight="600">WCAG</text>
-                <text x="100" y="112" textAnchor="middle" fill="white" fontFamily="Inter" fontSize="14" fontWeight="800">AA</text>
-              </svg>
+              {/* Module progress ring */}
+              <div className="hidden md:flex flex-col items-center gap-2">
+                <div className="relative w-24 h-24">
+                  <svg viewBox="0 0 120 120" className="w-full h-full">
+                    <circle cx="60" cy="60" r="48" fill="none" stroke="rgba(255,255,255,.08)" strokeWidth="8" />
+                    <circle cx="60" cy="60" r="48" fill="none" stroke="#14B8A6" strokeWidth="8" strokeLinecap="round"
+                      strokeDasharray={`${ccPct * 3.016} ${301.6 - ccPct * 3.016}`}
+                      transform="rotate(-90 60 60)" className="transition-all duration-1000 ease-out" />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-lg font-extrabold text-white">{continueModule.subs}</span>
+                    <span className="text-[0.5rem] text-ink-5">sub-bab</span>
+                  </div>
+                </div>
+                <span className="text-[0.625rem] text-ink-5">{continueModule.duration}</span>
+              </div>
             </div>
           </section>
         </Reveal>
