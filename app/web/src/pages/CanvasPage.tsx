@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   MousePointer2, Square, Type, Hand, Pen, Plus, Layers, Save,
@@ -7,35 +7,18 @@ import {
   Undo2, Redo2, Lock, Unlock, LayoutDashboard, BookOpen, Users, ChevronLeft,
 } from 'lucide-react'
 import { useToast } from '../components/ui/Toast'
+import {
+  ARTBOARD_H,
+  ARTBOARD_W,
+  getUnresolvedPinCountForProject,
+  loadCanvasProjects,
+  saveCanvasProjects,
+  type CanvasLayer,
+  type CanvasProject,
+} from '../store/canvasStore'
 
-/* ─── Types ─── */
-interface Layer {
-  id: number
-  name: string
-  type: 'Frame' | 'Text' | 'Rectangle' | 'Ellipse' | 'Path'
-  visible: boolean
-  locked: boolean
-  x: number
-  y: number
-  w: number
-  h: number
-  color: string
-  text?: string
-  fontSize?: number
-  borderRadius?: number
-  opacity?: number
-  // For pen tool paths
-  points?: { x: number; y: number }[]
-}
-
-interface ProjectItem {
-  id: number
-  name: string
-  date: string
-  color: string
-  layers: Layer[]
-}
-
+type Layer = CanvasLayer
+type ProjectItem = CanvasProject
 type ToolId = 'select' | 'frame' | 'text' | 'hand' | 'pen'
 
 const tools: { id: ToolId; icon: typeof MousePointer2; label: string; shortcut: string }[] = [
@@ -49,7 +32,7 @@ const tools: { id: ToolId; icon: typeof MousePointer2; label: string; shortcut: 
 const templateNames = ['Kosong', 'Landing Page', 'Wireframe', 'Mobile App']
 
 let nextLayerId = 100
-const CANVAS_STORAGE_KEY = 'nodes-canvas-projects'
+const MAX_HISTORY = 50
 
 function getDefaultLayers(): Layer[] {
   return [
@@ -87,36 +70,31 @@ function getMobileAppLayers(): Layer[] {
   ]
 }
 
-const ARTBOARD_W = 480
-const ARTBOARD_H = 400
-
-/* ─── Undo History ─── */
-const MAX_HISTORY = 50
-
-/* ─── Component ─── */
 export default function CanvasPage() {
   const [activeTool, setActiveTool] = useState<ToolId>('select')
   const [showNewModal, setShowNewModal] = useState(false)
   const [showNavMenu, setShowNavMenu] = useState(false)
+  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
 
   // Projects with their own layers — persisted in localStorage
   const [projects, setProjects] = useState<ProjectItem[]>(() => {
-    try {
-      const saved = localStorage.getItem(CANVAS_STORAGE_KEY)
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        for (const p of parsed) {
-          for (const l of p.layers) {
-            if (l.id >= nextLayerId) nextLayerId = l.id + 1
-          }
-        }
-        return parsed
+    const parsed = loadCanvasProjects()
+    for (const p of parsed) {
+      for (const l of p.layers) {
+        if (l.id >= nextLayerId) nextLayerId = l.id + 1
       }
-    } catch { /* ignore */ }
-    return []
+    }
+    return parsed
   })
-  const [activeProject, setActiveProject] = useState<number | null>(null)
+  const [activeProject, setActiveProject] = useState<number | null>(() => {
+    const paramId = Number(searchParams.get('project'))
+    if (paramId) {
+      const existing = loadCanvasProjects().find(p => p.id === paramId)
+      if (existing) return existing.id
+    }
+    return null
+  })
   const [zoom, setZoom] = useState(100)
   const [selectedLayer, setSelectedLayer] = useState<number | null>(null)
   const [showSidebar, setShowSidebar] = useState(true)
@@ -124,6 +102,7 @@ export default function CanvasPage() {
   // Get current project's layers
   const currentProject = projects.find(p => p.id === activeProject)
   const layers = currentProject?.layers ?? []
+  const unresolvedPins = currentProject ? getUnresolvedPinCountForProject(currentProject.id) : 0
 
   function setLayers(updater: Layer[] | ((prev: Layer[]) => Layer[])) {
     setProjects(prev => prev.map(p => {
@@ -134,7 +113,11 @@ export default function CanvasPage() {
   }
 
   // Undo/Redo history
-  const [history, setHistory] = useState<Layer[][]>([[]])
+  const [history, setHistory] = useState<Layer[][]>(() => {
+    const paramId = Number(searchParams.get('project'))
+    const existing = paramId ? loadCanvasProjects().find(p => p.id === paramId) : null
+    return [existing ? existing.layers : []]
+  })
   const [historyIndex, setHistoryIndex] = useState(0)
 
   function pushHistory(newLayers: Layer[]) {
@@ -196,7 +179,7 @@ export default function CanvasPage() {
 
   /* ─── Persist projects to localStorage ─── */
   useEffect(() => {
-    localStorage.setItem(CANVAS_STORAGE_KEY, JSON.stringify(projects))
+    saveCanvasProjects(projects)
   }, [projects])
 
   /* ─── Center artboard on mount ─── */
@@ -595,12 +578,25 @@ export default function CanvasPage() {
       layers: templateLayers,
     }
     setProjects(prev => [newProject, ...prev])
-    switchProject(newProject.id)
+    setActiveProject(newProject.id)
+    setSelectedLayer(null)
+    setEditingText(null)
+    setHistory([templateLayers])
+    setHistoryIndex(0)
     setShowNewModal(false)
     setNewProjectName('')
     setSelectedTemplate(0)
     setNameError('')
     success('Proyek Dibuat', `"${newProject.name}" berhasil dibuat.`)
+  }
+
+  function handleOpenCollab() {
+    saveCanvasProjects(projects)
+    if (currentProject) {
+      navigate(`/app/kolaborasi?project=${currentProject.id}`)
+    } else {
+      navigate('/app/kolaborasi')
+    }
   }
 
   /* ─── Canvas cursor ─── */
@@ -751,6 +747,21 @@ export default function CanvasPage() {
             <span className="text-xs font-medium text-ink-4 w-10 text-center">{zoom}%</span>
             <button onClick={() => setZoom(Math.min(300, zoom + 25))} className="p-1.5 text-ink-4 hover:text-ink"><ZoomIn className="w-3.5 h-3.5" /></button>
           </div>
+          {currentProject && (
+            <button
+              onClick={handleOpenCollab}
+              className="relative flex items-center gap-1.5 px-3 py-2 border border-ink-7 text-ink text-xs sm:text-sm font-semibold rounded-xl hover:border-teal-600 hover:text-teal-600 transition-colors cursor-pointer"
+              title="Review & kolaborasi desain ini"
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Kolaborasi</span>
+              {unresolvedPins > 0 && (
+                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-purple-600 text-white rounded-full leading-none">
+                  {unresolvedPins}
+                </span>
+              )}
+            </button>
+          )}
           <button
             onClick={handleSave}
             className="flex items-center gap-1.5 px-4 py-2 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors"
