@@ -439,7 +439,16 @@ export default function LandingPage() {
         <div className="max-w-[1280px] mx-auto px-[clamp(20px,4vw,80px)]">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-12 pb-12">
             <div>
-              <Link to="/" className="text-[1.375rem] font-extrabold text-white tracking-tighter">nodes<span className="text-teal-600">.</span></Link>
+              <div className="flex items-center gap-3">
+                <Link to="/" className="text-[1.375rem] font-extrabold text-white tracking-tighter">nodes<span className="text-teal-600">.</span></Link>
+                <span className="w-px h-5 bg-white/15" aria-hidden="true" />
+                <img
+                  src="/logo-iti.png"
+                  alt="Institut Teknologi Indonesia"
+                  title="Institut Teknologi Indonesia"
+                  className="w-7 h-7 object-contain select-none shrink-0"
+                />
+              </div>
               <p className="text-sm text-ink-4 leading-relaxed mt-4 max-w-[300px]">Platform e-learning UI/UX interaktif untuk mahasiswa Teknik Informatika, Institut Teknologi Indonesia.</p>
             </div>
             {[

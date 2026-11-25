@@ -47,6 +47,16 @@ export default function NotFoundPage() {
             Kembali
           </button>
         </div>
+
+        <div className="mt-10 pt-6 border-t border-ink-8 flex items-center justify-center gap-2.5 text-xs text-ink-5">
+          <img
+            src="/logo-iti.png"
+            alt="Institut Teknologi Indonesia"
+            title="Institut Teknologi Indonesia"
+            className="w-5 h-5 object-contain select-none shrink-0"
+          />
+          <span>NODES · Institut Teknologi Indonesia</span>
+        </div>
       </motion.div>
     </div>
   )

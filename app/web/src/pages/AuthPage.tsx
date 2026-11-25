@@ -101,9 +101,18 @@ export default function AuthPage() {
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-          <Link to="/">
-            <img src="/logo.png" alt="NODES" className="h-8 brightness-0 invert" />
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link to="/">
+              <img src="/logo.png" alt="NODES" className="h-8 brightness-0 invert" />
+            </Link>
+            <span className="w-px h-5 bg-white/15" aria-hidden="true" />
+            <img
+              src="/logo-iti.png"
+              alt="Institut Teknologi Indonesia"
+              title="Institut Teknologi Indonesia"
+              className="w-7 h-7 object-contain select-none shrink-0"
+            />
+          </div>
 
           <div className="max-w-md">
             <AnimatePresence mode="wait">
@@ -165,9 +174,18 @@ export default function AuthPage() {
       <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-white">
         <div className="w-full max-w-md">
           {/* Mobile logo */}
-          <Link to="/" className="lg:hidden block mb-8">
-            <img src="/logo.png" alt="NODES" className="h-7" />
-          </Link>
+          <div className="lg:hidden flex items-center gap-3 mb-8">
+            <Link to="/">
+              <img src="/logo.png" alt="NODES" className="h-7" />
+            </Link>
+            <span className="w-px h-5 bg-ink-7" aria-hidden="true" />
+            <img
+              src="/logo-iti.png"
+              alt="Institut Teknologi Indonesia"
+              title="Institut Teknologi Indonesia"
+              className="w-7 h-7 object-contain select-none shrink-0"
+            />
+          </div>
 
           {/* Tab switcher */}
           <div className="relative flex bg-ink-9 rounded-xl p-1 mb-8">

@@ -216,6 +216,19 @@ export default function Topbar() {
             )}
           </AnimatePresence>
         </div>
+
+        {/* Institutional Logo (ITI) */}
+        <div
+          className="flex items-center gap-2 pl-2.5 ml-0.5 border-l border-ink-7 shrink-0"
+          title="Institut Teknologi Indonesia"
+        >
+          <img
+            src="/logo-iti.png"
+            alt="Institut Teknologi Indonesia"
+            className="w-6 h-6 object-contain select-none shrink-0"
+          />
+          <span className="hidden md:inline text-[11px] font-semibold text-ink-4 tracking-tight">ITI</span>
+        </div>
       </div>
     </header>
   )

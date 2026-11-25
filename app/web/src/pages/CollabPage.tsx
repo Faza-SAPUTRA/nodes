@@ -321,6 +321,15 @@ export default function CollabPage() {
               <ChevronLeft size={16} />
             </button>
             <h1 className="text-[15px] font-bold">Kolaborasi</h1>
+            <span className="w-px h-4 bg-ink-7" aria-hidden="true" />
+            <div className="flex items-center gap-1.5 shrink-0" title="Institut Teknologi Indonesia">
+              <img
+                src="/logo-iti.png"
+                alt="Institut Teknologi Indonesia"
+                className="w-6 h-6 object-contain select-none shrink-0"
+              />
+              <span className="hidden sm:inline text-[11px] font-semibold text-ink-4 tracking-tight">ITI</span>
+            </div>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
@@ -449,6 +458,13 @@ export default function CollabPage() {
           >
             <ChevronLeft size={16} />
           </button>
+          <img
+            src="/logo-iti.png"
+            alt="Institut Teknologi Indonesia"
+            title="Institut Teknologi Indonesia"
+            className="w-6 h-6 object-contain select-none shrink-0"
+          />
+          <span className="w-px h-5 bg-ink-7 shrink-0" aria-hidden="true" />
           <div className="min-w-0">
             <h1 className="text-[15px] font-bold truncate">{activeSession.title}</h1>
             <div className="flex items-center gap-1.5 text-[11px] text-ink-4 mt-0.5 flex-wrap">

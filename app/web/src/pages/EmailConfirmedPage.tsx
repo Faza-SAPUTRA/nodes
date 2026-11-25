@@ -30,6 +30,20 @@ export default function EmailConfirmedPage() {
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className="w-full max-w-md"
       >
+        {/* Co-brand header */}
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <Link to="/" className="text-xl font-extrabold tracking-tighter text-ink hover:text-teal-600 transition-colors">
+            nodes<span className="text-teal-600">.</span>
+          </Link>
+          <span className="w-px h-5 bg-ink-7" aria-hidden="true" />
+          <img
+            src="/logo-iti.png"
+            alt="Institut Teknologi Indonesia"
+            title="Institut Teknologi Indonesia"
+            className="w-7 h-7 object-contain select-none shrink-0"
+          />
+        </div>
+
         <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,.06)] border border-ink-7 p-8 text-center">
           {/* Success icon */}
           <motion.div

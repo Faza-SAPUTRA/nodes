@@ -654,6 +654,13 @@ export default function CanvasPage() {
               n<span className="text-teal-600">.</span>
               <ChevronRight className={`w-3 h-3 text-ink-5 transition-transform ${showNavMenu ? 'rotate-90' : ''}`} />
             </button>
+            <span className="w-px h-4 bg-ink-7 mx-1" aria-hidden="true" />
+            <img
+              src="/logo-iti.png"
+              alt="Institut Teknologi Indonesia"
+              title="Institut Teknologi Indonesia"
+              className="w-6 h-6 object-contain select-none shrink-0"
+            />
             <AnimatePresence>
               {showNavMenu && (
                 <motion.div
