@@ -12,6 +12,7 @@ import ConfirmDialog from '../components/ui/ConfirmDialog'
 import { resetAllTours } from '../components/ui/OnboardingTour'
 import { supabase } from '../lib/supabase'
 import { loadProgress, getTotalProgress, getModuleProgress, getModuleStatus } from '../store/progressStore'
+import { loadCanvasProjects, loadCollabSessions } from '../store/canvasStore'
 import { modulesData } from '../data/modules'
 
 /* ─── Types ─── */
@@ -120,7 +121,9 @@ export default function ProfilePage() {
   const totalStats = useMemo(() => getTotalProgress(progress, modulesData.length), [progress])
 
   // Dynamic stats
-  const xp = totalStats.done * 100 + totalStats.inProgress * 30
+  const passedQuizCount = Object.values(progress.quizScores || {}).filter(q => q.passed).length
+  const hasPerfectQuiz = Object.values(progress.quizScores || {}).some(q => q.bestScore === 100)
+  const xp = totalStats.done * 100 + totalStats.inProgress * 30 + passedQuizCount * 50
   const streakDays = progress.streak.current
   const activeDays = progress.streak.weekDays.filter(Boolean).length
   
@@ -149,6 +152,9 @@ export default function ProfilePage() {
       return false
     })()
 
+    const hasCanvasComponent = loadCanvasProjects().some(p => p.layers.length > 0)
+    const collabSessionCount = loadCollabSessions().length
+
     return [
       { emoji: 'FS', name: 'First Steps', desc: 'Selesaikan modul pertama', earned: mod1Done, date: mod1Done ? 'Tercapai' : undefined },
       { emoji: 'S7', name: 'Streak 7', desc: 'Login 7 hari berturut-turut', earned: streakDays >= 7, date: streakDays >= 7 ? 'Tercapai' : undefined },
@@ -156,14 +162,14 @@ export default function ProfilePage() {
       { emoji: 'CM', name: 'Color Master', desc: 'Selesaikan modul Teori Warna', earned: mod6Done, date: mod6Done ? 'Tercapai' : undefined },
       { emoji: 'GG', name: 'Grid Guru', desc: 'Kuasai layout & grid system', earned: mod5Done, date: mod5Done ? 'Tercapai' : undefined },
       { emoji: 'NT', name: 'Note Taker', desc: 'Tambahkan catatan di modul', earned: hasNotes, date: hasNotes ? 'Tercapai' : undefined },
-      { emoji: 'FC', name: 'First Component', desc: 'Buat komponen pertama di canvas', earned: false },
-      { emoji: 'CB', name: 'Collaborator', desc: 'Ikut 3 sesi kolaborasi', earned: false },
+      { emoji: 'FC', name: 'First Component', desc: 'Buat komponen pertama di canvas', earned: hasCanvasComponent, date: hasCanvasComponent ? 'Tercapai' : undefined },
+      { emoji: 'CB', name: 'Collaborator', desc: 'Buat sesi kolaborasi review desain', earned: collabSessionCount >= 1, date: collabSessionCount >= 1 ? 'Tercapai' : undefined },
       { emoji: 'DC', name: 'Design Champion', desc: 'Selesaikan semua modul', earned: totalStats.done >= modulesData.length, date: totalStats.done >= modulesData.length ? 'Tercapai' : undefined },
       { emoji: 'S3', name: 'Streak 30', desc: 'Login 30 hari berturut-turut', earned: streakDays >= 30, date: streakDays >= 30 ? 'Tercapai' : undefined },
-      { emoji: 'MT', name: 'Mentor', desc: 'Bantu 5 orang di kolaborasi', earned: false },
-      { emoji: 'PF', name: 'Perfectionist', desc: 'Skor 100 di semua quiz', earned: false },
+      { emoji: 'MT', name: 'Active Reviewer', desc: 'Buat 3 sesi kolaborasi', earned: collabSessionCount >= 3, date: collabSessionCount >= 3 ? 'Tercapai' : undefined },
+      { emoji: 'PF', name: 'Perfectionist', desc: 'Raih skor 100% di evaluasi modul', earned: hasPerfectQuiz, date: hasPerfectQuiz ? 'Tercapai' : undefined },
     ]
-  }, [progress, totalStats, streakDays])
+  }, [progress, totalStats, streakDays, hasPerfectQuiz])
 
   const earnedBadgeCount = dynamicBadges.filter(b => b.earned).length
 

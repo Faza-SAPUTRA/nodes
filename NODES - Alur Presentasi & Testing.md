@@ -81,11 +81,12 @@
      - *Proses Design Thinking* (terkunci)
   2. **Sequential lock:** klik sub-bab yang terkunci → konten preview tampil blur dengan pesan *"Sub-bab Terkunci"*.
   3. **Catatan Pribadi:** scroll ke bawah, tulis catatan singkat → klik **Simpan** → toast *"Catatan Tersimpan"* (tersimpan di `localStorage`).
-  4. **Selesaikan Modul 1:**
+  4. **Selesaikan Modul 1 & Evaluasi Quiz:**
      - Klik **"Tandai Selesai"** di sub-bab 1 → otomatis lanjut ke sub-bab 2.
-     - Tandai selesai berurutan sampai sub-bab 4 (`Progress 100%`).
-     - Muncul banner **"Modul Selesai!"** + tombol **"Modul Selanjutnya"**.
-     - Klik **"Modul Selanjutnya"** → langsung terbuka modul **02 Analisis Pengguna & Persona**.
+     - Tandai selesai berurutan sampai sub-bab 4 (`Progress 100%`) → otomatis masuk ke **Evaluasi Modul** (4 soal pilihan ganda, batas lulus 70%).
+     - Pilih jawaban → klik **"Periksa Jawaban"** → tampil highlight benar/salah + **Pembahasan** singkat → lanjut hingga **Lihat Hasil Evaluasi**.
+     - Tunjukkan ringkasan skor & status lulus (bisa klik **"Ulangi Evaluasi"** atau **"Modul Selanjutnya"** untuk langsung ke **02 Analisis Pengguna & Persona**).
+     - Skor evaluasi otomatis muncul di kartu **Katalog Modul**, menambah **+50 XP**, dan membuka badge **Perfectionist** di Profil jika skor `100%`.
 
 ---
 

@@ -1,11 +1,13 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronRight, Check, BookOpen, Clock, Award, ChevronDown, Save, Lock, ArrowRight } from 'lucide-react'
+import { ChevronRight, Check, BookOpen, Clock, Award, ChevronDown, Save, Lock, ArrowRight, ClipboardCheck } from 'lucide-react'
 import { modulesData } from '../data/modules'
 import { moduleSubBabs, subBabContent } from '../data/moduleSubBabs'
+import { moduleQuizzes, PASSING_SCORE } from '../data/moduleQuizzes'
+import ModuleQuiz from '../components/modules/ModuleQuiz'
 import { useToast } from '../components/ui/Toast'
-import { loadProgress, saveProgress, markSubBabComplete, addActivity } from '../store/progressStore'
+import { loadProgress, saveProgress, markSubBabComplete, saveQuizResult, addActivity, type QuizResult } from '../store/progressStore'
 
 function slugify(title: string) {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
@@ -82,10 +84,19 @@ export default function ModuleDetailPage() {
     setActiveSub(defaultSubBabs[0]?.id ?? 1)
   }, [slug]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const [activeSub, setActiveSub] = useState(() => {
+  const [activeSub, setActiveSub] = useState<number | 'quiz'>(() => {
     const firstIncomplete = subBabs.find((s) => !s.done)
     return firstIncomplete?.id ?? 1
   })
+
+  const [quizResult, setQuizResult] = useState<QuizResult | undefined>(() => loadProgress().quizScores?.[moduleId])
+
+  useEffect(() => {
+    setQuizResult(loadProgress().quizScores?.[moduleId])
+  }, [moduleId])
+
+  const quizQuestions = moduleQuizzes[moduleId] || []
+  const hasQuiz = quizQuestions.length > 0
 
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
@@ -96,14 +107,17 @@ export default function ModuleDetailPage() {
 
   // Update notes when switching sub-bab
   useEffect(() => {
+    if (activeSub === 'quiz') return
     setNotes(localStorage.getItem(notesKey) || '')
     setSaved(false)
-  }, [notesKey])
+  }, [notesKey, activeSub])
 
   // Calculate progress
   const doneCount = subBabs.filter((s) => s.done).length
   const progress = Math.round((doneCount / subBabs.length) * 100)
   const isModuleComplete = progress >= 100
+  const isQuizLocked = !isModuleComplete
+  const isQuizPassed = quizResult?.passed ?? false
 
   // Persist sub-bab state
   useEffect(() => {
@@ -118,13 +132,14 @@ export default function ModuleDetailPage() {
   }
 
   const handleMarkDone = () => {
+    if (activeSub === 'quiz') return
     if (isSubLocked(activeSub)) {
       warning('Sub-bab Terkunci', 'Selesaikan sub-bab sebelumnya terlebih dahulu.')
       return
     }
-    setSubBabs((prev) =>
-      prev.map((s) => s.id === activeSub ? { ...s, done: !s.done } : s)
-    )
+    const updatedSubBabs = subBabs.map((s) => (s.id === activeSub ? { ...s, done: !s.done } : s))
+    setSubBabs(updatedSubBabs)
+
     const currentSub = subBabs.find((s) => s.id === activeSub)
     if (currentSub && !currentSub.done) {
       success('Sub-bab Selesai', `"${currentSub.title}" ditandai sebagai selesai.`)
@@ -137,11 +152,30 @@ export default function ModuleDetailPage() {
         saveProgress(prog)
       }
 
-      // Auto advance to next incomplete sub-bab
-      const nextSub = subBabs.find((s) => s.id > activeSub && !s.done)
+      // Auto advance to next incomplete sub-bab, or to Quiz if all sub-babs are done
+      const nextSub = updatedSubBabs.find((s) => s.id > activeSub && !s.done)
       if (nextSub) {
-        setTimeout(() => setActiveSub(nextSub.id), 500)
+        setTimeout(() => setActiveSub(nextSub.id), 450)
+      } else if (hasQuiz && updatedSubBabs.every((s) => s.done) && !isQuizPassed) {
+        setTimeout(() => setActiveSub('quiz'), 550)
       }
+    }
+  }
+
+  const handleQuizComplete = (result: { correct: number; total: number; score: number; passed: boolean }) => {
+    let prog = loadProgress()
+    prog = saveQuizResult(prog, moduleId, result.correct, result.total, PASSING_SCORE)
+    prog = addActivity(
+      prog,
+      `Evaluasi "${title}" — Skor ${result.score}% (${result.passed ? 'Lulus' : 'Belum Lulus'})`
+    )
+    saveProgress(prog)
+    setQuizResult(prog.quizScores[moduleId])
+
+    if (result.passed) {
+      success('Evaluasi Lulus', `Skor kamu ${result.score}% (${result.correct}/${result.total} benar).`)
+    } else {
+      warning('Belum Mencapai Batas Lulus', `Skor ${result.score}%. Minimal ${PASSING_SCORE}% untuk lulus — coba ulangi evaluasi.`)
     }
   }
 
@@ -156,7 +190,7 @@ export default function ModuleDetailPage() {
     }
   }
 
-  const activeSubData = subBabs.find((s) => s.id === activeSub)
+  const activeSubData = activeSub === 'quiz' ? undefined : subBabs.find((s) => s.id === activeSub)
   const activeContent = activeSubData ? subBabContent[activeSubData.title] : null
 
   // A sub-bab is locked if any previous sub-bab is not done
@@ -166,7 +200,7 @@ export default function ModuleDetailPage() {
     return subBabs.slice(0, idx).some((s) => !s.done)
   }
 
-  const activeIsLocked = isSubLocked(activeSub)
+  const activeIsLocked = activeSub === 'quiz' ? isQuizLocked : isSubLocked(activeSub)
 
   return (
     <div className="space-y-4">
@@ -264,6 +298,50 @@ export default function ModuleDetailPage() {
                   })}
                 </div>
 
+                {/* Quiz Evaluation sidebar entry */}
+                {hasQuiz && (
+                  <div className="mt-2 pt-2 border-t border-ink-7">
+                    <button
+                      onClick={() => {
+                        if (isQuizLocked) {
+                          warning('Evaluasi Terkunci', 'Selesaikan semua sub-bab terlebih dahulu untuk membuka evaluasi.')
+                          return
+                        }
+                        setActiveSub('quiz')
+                      }}
+                      className={`w-full flex items-center gap-3 p-3 rounded-xl text-left text-sm transition-all ${
+                        isQuizLocked
+                          ? 'text-ink-5 opacity-60 cursor-not-allowed'
+                          : activeSub === 'quiz'
+                          ? 'bg-teal-50 text-teal-700 font-semibold border border-teal-200'
+                          : isQuizPassed
+                          ? 'text-ink-4 hover:bg-ink-9 cursor-pointer'
+                          : 'text-ink-2 font-medium hover:bg-ink-9 cursor-pointer'
+                      }`}
+                    >
+                      {isQuizPassed ? (
+                        <div className="w-5 h-5 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center flex-shrink-0">
+                          <Check className="w-3 h-3" strokeWidth={3} />
+                        </div>
+                      ) : isQuizLocked ? (
+                        <div className="w-5 h-5 rounded-full bg-ink-8 text-ink-5 flex items-center justify-center flex-shrink-0">
+                          <Lock className="w-2.5 h-2.5" />
+                        </div>
+                      ) : (
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${activeSub === 'quiz' ? 'bg-teal-600 text-white' : 'bg-teal-50 text-teal-600'}`}>
+                          <ClipboardCheck className="w-3 h-3" />
+                        </div>
+                      )}
+                      <span className="truncate flex-1">Evaluasi Modul</span>
+                      {quizResult && (
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${quizResult.passed ? 'bg-teal-100 text-teal-700' : 'bg-red-100 text-red-600'}`}>
+                          {quizResult.bestScore}%
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                )}
+
                 {/* Next Module Button — show when module is complete */}
                 {isModuleComplete && (
                   <div className="mt-4 pt-4 border-t border-ink-7">
@@ -286,6 +364,19 @@ export default function ModuleDetailPage() {
 
         {/* Content area */}
         <div className="flex-1 min-w-0">
+          {activeSub === 'quiz' && hasQuiz ? (
+            <ModuleQuiz
+              key={`quiz-${moduleId}`}
+              moduleTitle={title}
+              questions={quizQuestions}
+              locked={isQuizLocked}
+              previousResult={quizResult}
+              hasNextModule={Boolean(moduleData && moduleData.id < modulesData.length)}
+              onComplete={handleQuizComplete}
+              onNextModule={handleNextModule}
+            />
+          ) : (
+          <>
           <AnimatePresence mode="wait">
             <motion.div
               key={activeSub}
@@ -388,7 +479,7 @@ export default function ModuleDetailPage() {
             </div>
           </div>
 
-          {/* Module complete banner */}
+          {/* Module complete / Quiz prompt banner */}
           {isModuleComplete && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -397,20 +488,38 @@ export default function ModuleDetailPage() {
             >
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-bold text-teal-800">Modul Selesai!</h3>
+                  <h3 className="text-lg font-bold text-teal-800">
+                    {hasQuiz && !isQuizPassed ? 'Materi Selesai — Lanjut ke Evaluasi' : 'Modul Selesai!'}
+                  </h3>
                   <p className="text-sm text-teal-700/80 mt-1">
-                    Kamu telah menyelesaikan semua sub-bab di modul "{title}". Lanjutkan ke modul berikutnya.
+                    {hasQuiz && !isQuizPassed
+                      ? `Uji pemahamanmu lewat ${quizQuestions.length} soal Evaluasi Modul "${title}".`
+                      : `Kamu telah menyelesaikan materi${quizResult ? ` dan evaluasi (skor ${quizResult.bestScore}%)` : ''} di modul "${title}".`}
                   </p>
                 </div>
-                <button
-                  onClick={handleNextModule}
-                  className="flex items-center gap-2 px-6 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors cursor-pointer flex-shrink-0"
-                >
-                  {moduleData && moduleData.id < modulesData.length ? 'Modul Selanjutnya' : 'Kembali ke Katalog'}
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {hasQuiz && !isQuizPassed ? (
+                    <button
+                      onClick={() => setActiveSub('quiz')}
+                      className="flex items-center gap-2 px-5 py-3 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors cursor-pointer"
+                    >
+                      <ClipboardCheck className="w-4 h-4" />
+                      Mulai Evaluasi
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleNextModule}
+                      className="flex items-center gap-2 px-6 py-3 bg-teal-600 text-white text-sm font-semibold rounded-xl hover:bg-teal-700 transition-colors cursor-pointer"
+                    >
+                      {moduleData && moduleData.id < modulesData.length ? 'Modul Selanjutnya' : 'Kembali ke Katalog'}
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
             </motion.div>
+          )}
+          </>
           )}
         </div>
       </div>

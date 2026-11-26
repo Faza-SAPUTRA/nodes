@@ -25,9 +25,20 @@ export interface CanvasProject {
   layers: unknown[]
 }
 
+export interface QuizResult {
+  score: number
+  bestScore: number
+  correct: number
+  total: number
+  passed: boolean
+  completedAt: string
+}
+
 export interface UserProgress {
   /** Module progress by module id */
   modules: Record<number, ModuleProgress>
+  /** Quiz evaluation results by module id */
+  quizScores: Record<number, QuizResult>
   /** Streak data */
   streak: {
     current: number
@@ -43,6 +54,7 @@ export interface UserProgress {
 function getDefaultProgress(): UserProgress {
   return {
     modules: {},
+    quizScores: {},
     streak: {
       current: 0,
       lastLoginDate: '',
@@ -151,6 +163,34 @@ export function markSubBabComplete(progress: UserProgress, moduleId: number, sub
     modules: {
       ...progress.modules,
       [moduleId]: { progress: newProgress, subBabs: newSubBabs },
+    },
+  }
+}
+
+export function saveQuizResult(
+  progress: UserProgress,
+  moduleId: number,
+  correct: number,
+  total: number,
+  passingScore = 70
+): UserProgress {
+  const score = total > 0 ? Math.round((correct / total) * 100) : 0
+  const prev = progress.quizScores?.[moduleId]
+  const bestScore = Math.max(prev?.bestScore ?? 0, score)
+  const passed = (prev?.passed ?? false) || score >= passingScore
+
+  return {
+    ...progress,
+    quizScores: {
+      ...(progress.quizScores || {}),
+      [moduleId]: {
+        score,
+        bestScore,
+        correct,
+        total,
+        passed,
+        completedAt: new Date().toISOString(),
+      },
     },
   }
 }

@@ -153,7 +153,14 @@ export default function ModulesPage() {
                 </div>
 
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-ink-7/50">
-                  <span className="text-[0.625rem] text-ink-5">Bobot: {m.weight}%</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[0.625rem] text-ink-5">Bobot: {m.weight}%</span>
+                    {progress.quizScores?.[m.id] && (
+                      <span className={`text-[0.625rem] font-semibold px-1.5 py-0.5 rounded ${progress.quizScores[m.id].passed ? 'bg-teal-50 text-teal-700' : 'bg-red-50 text-red-600'}`}>
+                        Evaluasi: {progress.quizScores[m.id].bestScore}%
+                      </span>
+                    )}
+                  </div>
                   <span className={`px-3 py-1 text-[0.6875rem] font-semibold rounded-lg ${
                     isDone ? 'bg-teal-50 text-teal-600' :
                     isProgress ? 'bg-teal-600 text-white' :
